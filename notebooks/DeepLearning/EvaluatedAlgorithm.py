@@ -32,7 +32,7 @@ class EvaluatedAlgorithm:
             # Build predictions for all ratings not in the training set
             allPredictions = self.algorithm.test(evaluationData.GetLOOCVAntiTestSet())
             # Compute top 10 recs for each user
-            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n)
+            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n, minimumRating=0.0)
             if (verbose):
                 print("Computing hit-rate and rank metrics...")
             # See how often we recommended a movie the user actually rated
@@ -47,7 +47,7 @@ class EvaluatedAlgorithm:
                 print("Computing recommendations with full data set...")
             self.algorithm.fit(evaluationData.GetFullTrainSet())
             allPredictions = self.algorithm.test(evaluationData.GetFullAntiTestSet())
-            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n)
+            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n, minimumRating=0.0)
             if (verbose):
                 print("Analyzing coverage, diversity, and novelty...")
             # Print user coverage with a minimum predicted rating of 4.0:
