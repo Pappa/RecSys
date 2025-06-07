@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recsys"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "surprise",
+    "numpy<2",
+]
+
+[project.optional-dependencies]
+testing = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests", "notebooks"]
+
+[tool.setuptools.package-data]
+mypkg = ["*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = ["--cov=src", "--cov-report=html"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+fail_under = 95
+skip_empty = true
+include_namespace_packages = true
