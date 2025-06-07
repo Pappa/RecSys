@@ -2,6 +2,7 @@ import os
 import csv
 import sys
 import re
+from pathlib import Path
 
 from surprise import Dataset
 from surprise import Reader
@@ -13,17 +14,15 @@ class MovieLens:
 
     movieID_to_name = {}
     name_to_movieID = {}
-    ratingsPath = '../ml-latest-small/ratings.csv'
-    moviesPath = '../ml-latest-small/movies.csv'
     
     def loadMovieLensLatestSmall(self):
-
-        # Look for files relative to the directory we are running from
-        os.chdir(os.path.dirname(sys.argv[0]))
 
         ratingsDataset = 0
         self.movieID_to_name = {}
         self.name_to_movieID = {}
+        self.pathBase = os.path.dirname(os.path.realpath(__file__))
+        self.ratingsPath = Path(self.pathBase + '/../ml-latest-small/ratings.csv').resolve()
+        self.moviesPath = Path(self.pathBase + '/../ml-latest-small/movies.csv').resolve()
 
         reader = Reader(line_format='user item rating timestamp', sep=',', skip_lines=1)
 
