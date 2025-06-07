@@ -12,7 +12,7 @@ import math
 import numpy as np
 import heapq
 
-class ContentKNNAlgorithm(AlgoBase):
+class ContentKNN(AlgoBase):
 
     def __init__(self, k=40, sim_options={}):
         AlgoBase.__init__(self)

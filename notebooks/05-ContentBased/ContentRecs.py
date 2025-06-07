@@ -7,7 +7,7 @@ Created on Fri May  4 16:25:39 2018
 
 
 from recsys.MovieLens import MovieLens
-from ContentKNNAlgorithm import ContentKNNAlgorithm
+from recsys.algorithms.ContentKNN import ContentKNN
 from recsys.Evaluator import Evaluator
 from surprise import NormalPredictor
 
@@ -23,7 +23,7 @@ random.seed(0)
 # Construct an Evaluator to, you know, evaluate them
 evaluator = Evaluator(evaluationData, rankings)
 
-contentKNN = ContentKNNAlgorithm()
+contentKNN = ContentKNN()
 evaluator.AddAlgorithm(contentKNN, "ContentKNN")
 
 # Just make random recommendations

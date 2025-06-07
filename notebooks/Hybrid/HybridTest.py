@@ -7,7 +7,7 @@ Created on Thu May  3 11:11:13 2018
 
 from recsys.MovieLens import MovieLens
 from RBMAlgorithm import RBMAlgorithm
-from ContentKNNAlgorithm import ContentKNNAlgorithm
+from recsys.algorithms.ContentKNN import ContentKNN
 from HybridAlgorithm import HybridAlgorithm
 from recsys.Evaluator import Evaluator
 
@@ -26,7 +26,7 @@ evaluator = Evaluator(evaluationData, rankings)
 #Simple RBM
 SimpleRBM = RBMAlgorithm(epochs=40)
 #Content
-ContentKNN = ContentKNNAlgorithm()
+ContentKNN = ContentKNN()
 
 #Combine them
 Hybrid = HybridAlgorithm([SimpleRBM, ContentKNN], [0.5, 0.5])
