@@ -25,14 +25,17 @@ class MovieLens:
         rankings = lens.getPopularityRanks()
         return (lens, data, rankings)
     
+    def __init__(self) -> None:
+        self.pathBase = os.path.dirname(os.path.realpath(__file__))
+        self.ratingsPath = Path(self.pathBase + '/data/ratings.csv').resolve()
+        self.moviesPath = Path(self.pathBase + '/data/movies.csv').resolve()
+        self.visualFeaturesPath = Path(self.pathBase + '/data/LLVisualFeatures13K_Log.csv').resolve()
+    
     def loadMovieLensLatestSmall(self):
 
         ratingsDataset = 0
         self.movieID_to_name = {}
         self.name_to_movieID = {}
-        self.pathBase = os.path.dirname(os.path.realpath(__file__))
-        self.ratingsPath = Path(self.pathBase + '/data/ratings.csv').resolve()
-        self.moviesPath = Path(self.pathBase + '/data/movies.csv').resolve()
 
         reader = Reader(line_format='user item rating timestamp', sep=',', skip_lines=1)
 
@@ -190,7 +193,7 @@ class MovieLens:
     
     def getMiseEnScene(self):
         mes = defaultdict(list)
-        with open("LLVisualFeatures13K_Log.csv", newline='') as csvfile:
+        with open(self.visualFeaturesPath, newline='') as csvfile:
             mesReader = csv.reader(csvfile)
             next(mesReader)
             for row in mesReader:
