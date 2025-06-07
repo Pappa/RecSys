@@ -8,7 +8,7 @@ Created on Fri May  4 16:25:39 2018
 
 from recsys.MovieLens import MovieLens
 from ContentKNNAlgorithm import ContentKNNAlgorithm
-from Evaluator import Evaluator
+from recsys.Evaluator import Evaluator
 from surprise import NormalPredictor
 
 import random

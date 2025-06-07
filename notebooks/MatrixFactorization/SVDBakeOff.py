@@ -8,7 +8,7 @@ Created on Thu May  3 11:11:13 2018
 from recsys.MovieLens import MovieLens
 from surprise import SVD, SVDpp
 from surprise import NormalPredictor
-from Evaluator import Evaluator
+from recsys.Evaluator import Evaluator
 
 import random
 import numpy as np

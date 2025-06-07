@@ -9,7 +9,7 @@ from recsys.MovieLens import MovieLens
 from RBMAlgorithm import RBMAlgorithm
 from ContentKNNAlgorithm import ContentKNNAlgorithm
 from HybridAlgorithm import HybridAlgorithm
-from Evaluator import Evaluator
+from recsys.Evaluator import Evaluator
 
 import random
 import numpy as np
