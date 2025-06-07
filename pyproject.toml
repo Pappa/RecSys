@@ -11,6 +11,7 @@ dependencies = [
     "surprise",
     "numpy<2",
     "pandas",
+    "tensorflow",
 ]
 
 [project.optional-dependencies]

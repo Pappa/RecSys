@@ -5,7 +5,7 @@ Created on Thu May  3 10:22:34 2018
 @author: Frank
 """
 from recsys.EvaluationData import EvaluationData
-from EvaluatedAlgorithm import EvaluatedAlgorithm
+from recsys.EvaluatedAlgorithm import EvaluatedAlgorithm
 
 class Evaluator:
     
@@ -15,8 +15,8 @@ class Evaluator:
         ed = EvaluationData(dataset, rankings)
         self.dataset = ed
         
-    def AddAlgorithm(self, algorithm, name):
-        alg = EvaluatedAlgorithm(algorithm, name)
+    def AddAlgorithm(self, algorithm, name, algo_cls=EvaluatedAlgorithm):
+        alg = algo_cls(algorithm, name)
         self.algorithms.append(alg)
         
     def Evaluate(self, doTopN):
