@@ -5,7 +5,7 @@ Created on Thu May  3 11:11:13 2018
 @author: Frank
 """
 
-from MovieLens import MovieLens
+from recsys.MovieLens import MovieLens
 from surprise import SVD, SVDpp
 from surprise import NormalPredictor
 from Evaluator import Evaluator

@@ -5,7 +5,7 @@ Created on Wed May  9 10:10:04 2018
 @author: Frank
 """
 
-from MovieLens2 import MovieLens
+from recsys.MovieLens import MovieLens
 from surprise import KNNBasic
 import heapq
 import random

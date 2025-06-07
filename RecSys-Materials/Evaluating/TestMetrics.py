@@ -1,4 +1,4 @@
-from MovieLens import MovieLens
+from recsys.MovieLens import MovieLens
 from surprise import SVD
 from surprise import KNNBaseline
 from surprise.model_selection import train_test_split

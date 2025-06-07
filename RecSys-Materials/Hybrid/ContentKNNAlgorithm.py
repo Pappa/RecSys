@@ -7,7 +7,7 @@ Created on Fri May  4 13:08:25 2018
 
 from surprise import AlgoBase
 from surprise import PredictionImpossible
-from MovieLens import MovieLens
+from recsys.MovieLens import MovieLens
 import math
 import numpy as np
 import heapq

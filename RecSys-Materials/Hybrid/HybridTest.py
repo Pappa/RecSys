@@ -5,7 +5,7 @@ Created on Thu May  3 11:11:13 2018
 @author: Frank
 """
 
-from MovieLens import MovieLens
+from recsys.MovieLens import MovieLens
 from RBMAlgorithm import RBMAlgorithm
 from ContentKNNAlgorithm import ContentKNNAlgorithm
 from HybridAlgorithm import HybridAlgorithm

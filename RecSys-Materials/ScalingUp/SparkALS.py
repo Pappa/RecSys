@@ -11,7 +11,7 @@ from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.recommendation import ALS
 from pyspark.sql import Row
 
-from MovieLens import MovieLens
+from recsys.MovieLens import MovieLens
 
 if __name__ == "__main__":
     spark = SparkSession\

@@ -1,6 +1,8 @@
 import os
 import csv
 import re
+import pandas as pd
+import sys
 from pathlib import Path
 
 from surprise import Dataset
@@ -36,6 +38,68 @@ class MovieLens:
                     self.name_to_movieID[movieName] = movieID
 
         return ratingsDataset
+    
+
+    
+    def loadMovieLensLatestSmall2(self, outlierStdDev = 3.0):
+
+        # Look for files relative to the directory we are running from
+        os.chdir(os.path.dirname(sys.argv[0]))
+
+        ratingsDataset = 0
+        
+        ratings = pd.read_csv(self.ratingsPath, encoding='latin-1')
+        print("Raw ratings data:")
+        print(ratings.head())
+        print(ratings.shape)
+        
+        ratingsByUser = ratings.groupby('userId', as_index=False).agg({"rating": "count"})
+        print("Ratings by user:")
+        print (ratingsByUser.head())
+
+        ratingsByUser['outlier'] = (abs(ratingsByUser.rating - ratingsByUser.rating.mean()) > ratingsByUser.rating.std() * outlierStdDev)
+        ratingsByUser = ratingsByUser.drop(columns=['rating'])
+        print("Users with outliers computed:")
+        print (ratingsByUser.head())
+
+        combined = ratings.merge(ratingsByUser, on='userId', how='left')
+        print("Merged dataframes:")
+        print(combined.head())
+        
+        filtered = combined.loc[combined['outlier'] == False]
+        filtered = filtered.drop(columns=['outlier', 'timestamp'])
+        print("Filtered ratings data:")
+        print (filtered.head())
+        print (filtered.shape)
+        
+        reader = Reader(rating_scale=(1, 5))
+        ratingsDataset = Dataset.load_from_df(filtered, reader)
+
+        self.movieID_to_name = {}
+        self.name_to_movieID = {}
+
+        with open(self.moviesPath, newline='', encoding='ISO-8859-1') as csvfile:
+                movieReader = csv.reader(csvfile)
+                next(movieReader)  #Skip header line
+                for row in movieReader:
+                    movieID = int(row[0])
+                    movieName = row[1]
+                    self.movieID_to_name[movieID] = movieName
+                    self.name_to_movieID[movieName] = movieID
+
+        return ratingsDataset
+    
+    def getNewMovies(self):
+        newMovies = []
+        years = self.getYears()
+        # What's the newest year in our data?
+        latestYear = max(years.values())
+        print ("Newest year is ", latestYear)
+        for movieID, year in years.items():
+            if year == latestYear:
+                newMovies.append(movieID)
+                #print (self.getMovieName(movieID))
+        return newMovies
 
     def getUserRatings(self, user):
         userRatings = []

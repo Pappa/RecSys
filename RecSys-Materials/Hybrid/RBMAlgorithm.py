@@ -9,7 +9,7 @@ from surprise import AlgoBase
 from surprise import PredictionImpossible
 import numpy as np
 from RBM import RBM
-from MovieLens import MovieLens
+from recsys.MovieLens import MovieLens
 
 class RBMAlgorithm(AlgoBase):
 
