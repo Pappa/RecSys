@@ -14,15 +14,7 @@ from surprise.model_selection import LeaveOneOut
 from RecommenderMetrics import RecommenderMetrics
 from EvaluationData import EvaluationData
 
-def LoadMovieLensData():
-    ml = MovieLens()
-    print("Loading movie ratings...")
-    data = ml.loadMovieLensLatestSmall()
-    print("\nComputing movie popularity ranks so we can measure novelty later...")
-    rankings = ml.getPopularityRanks()
-    return (ml, data, rankings)
-
-ml, data, rankings = LoadMovieLensData()
+ml, data, rankings  = MovieLens.load()
 
 evalData = EvaluationData(data, rankings)
 

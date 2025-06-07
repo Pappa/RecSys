@@ -14,6 +14,16 @@ class MovieLens:
 
     movieID_to_name = {}
     name_to_movieID = {}
+
+
+    @classmethod
+    def load(cls, *args, **kwargs):
+        lens = MovieLens()
+        print("Loading movie ratings...")
+        data = lens.loadMovieLensLatestSmall()
+        print("\nComputing movie popularity ranks so we can measure novelty later...")
+        rankings = lens.getPopularityRanks()
+        return (lens, data, rankings)
     
     def loadMovieLensLatestSmall(self):
 
