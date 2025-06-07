@@ -15,8 +15,7 @@ testSubject = '85'
 k = 10
 
 # Load our data set and compute the user similarity matrix
-ml = MovieLens()
-data = ml.loadMovieLensLatestSmall()
+ml, data, ratings = MovieLens.load()
 
 trainSet = data.build_full_trainset()
 

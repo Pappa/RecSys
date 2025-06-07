@@ -14,8 +14,7 @@ from operator import itemgetter
 testSubject = '85'
 k = 10
 
-ml = MovieLens()
-data = ml.loadMovieLensLatestSmall()
+ml, data, ratings = MovieLens.load()
 
 trainSet = data.build_full_trainset()
 
