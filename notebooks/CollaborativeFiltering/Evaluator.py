@@ -4,7 +4,7 @@ Created on Thu May  3 10:22:34 2018
 
 @author: Frank
 """
-from EvaluationData import EvaluationData
+from recsys.EvaluationData import EvaluationData
 from EvaluatedAlgorithm import EvaluatedAlgorithm
 
 class Evaluator:

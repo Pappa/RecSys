@@ -11,7 +11,7 @@ import heapq
 from collections import defaultdict
 from operator import itemgetter
 from recsys.RecommenderMetrics import RecommenderMetrics
-from EvaluationData import EvaluationData
+from recsys.EvaluationData import EvaluationData
 
 ml, data, rankings  = MovieLens.load()
 
