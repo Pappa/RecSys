@@ -21,8 +21,8 @@ class MovieLens:
         self.movieID_to_name = {}
         self.name_to_movieID = {}
         self.pathBase = os.path.dirname(os.path.realpath(__file__))
-        self.ratingsPath = Path(self.pathBase + '/ml-latest-small/ratings.csv').resolve()
-        self.moviesPath = Path(self.pathBase + '/ml-latest-small/movies.csv').resolve()
+        self.ratingsPath = Path(self.pathBase + '/../ml-latest-small/ratings.csv').resolve()
+        self.moviesPath = Path(self.pathBase + '/../ml-latest-small/movies.csv').resolve()
 
         reader = Reader(line_format='user item rating timestamp', sep=',', skip_lines=1)
 
