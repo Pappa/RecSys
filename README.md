@@ -109,10 +109,11 @@ Course material for [Recommender Systems Udemy course](https://www.udemy.com/cou
 ## 09 - Deep Learning for Recommender Systems
 - Intro to Deep Learning for Recommenders
 - Restricted Boltzmann Machines (RBM's)
-- [Activity] Recommendations with RBM's, part 1
-- [Activity] Recommendations with RBM's, part 2
+- [Activity] Recommendations with RBM's
+   - [09-DeepLearning/RBMBakeOff.ipynb](./notebooks/09-DeepLearning/RBMBakeOff.ipynb)
 - [Activity] Evaluating the RBM Recommender
 - [Exercise] Tuning Restricted Boltzmann Machines
+   - [09-DeepLearning/RBMTuning.ipynb](./notebooks/09-DeepLearning/RBMTuning.ipynb)
 - Exercise Results: Tuning a RBM Recommender
 - Auto-Encoders for Recommendations: Deep Learning for Recs
 - [Activity] Recommendations with Deep Neural Networks
@@ -128,6 +129,7 @@ Course material for [Recommender Systems Udemy course](https://www.udemy.com/cou
 - Neural Collaborative Filtering (NCF)
 - Introducing the LibRecommender Python package
 - [Activity] Movie Recommendations with Neural Collaborative Filtering
+   - [09-DeepLearning/NeuralCollaborativeFiltering.ipynb](./notebooks/09-DeepLearning/NeuralCollaborativeFiltering.ipynb)
 - More Emerging Tech to Watch
 
 ## 10 - Scaling it Up
