@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May  3 10:45:33 2018
-
-@author: Frank
-"""
 from recsys.RecommenderMetrics import RecommenderMetrics
-from recsys.EvaluationData import EvaluationData
 
 class EvaluatedAlgorithm:
     
@@ -13,7 +6,7 @@ class EvaluatedAlgorithm:
         self.algorithm = algorithm
         self.name = name
         
-    def Evaluate(self, evaluationData, doTopN, n=10, verbose=True):
+    def Evaluate(self, evaluationData, doTopN, minimumRating=0.4, n=10, verbose=True):
         metrics = {}
         # Compute accuracy
         if (verbose):
@@ -32,7 +25,7 @@ class EvaluatedAlgorithm:
             # Build predictions for all ratings not in the training set
             allPredictions = self.algorithm.test(evaluationData.GetLOOCVAntiTestSet())
             # Compute top 10 recs for each user
-            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n)
+            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n, minimumRating)
             if (verbose):
                 print("Computing hit-rate and rank metrics...")
             # See how often we recommended a movie the user actually rated
@@ -47,7 +40,7 @@ class EvaluatedAlgorithm:
                 print("Computing recommendations with full data set...")
             self.algorithm.fit(evaluationData.GetFullTrainSet())
             allPredictions = self.algorithm.test(evaluationData.GetFullAntiTestSet())
-            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n)
+            topNPredicted = RecommenderMetrics.GetTopN(allPredictions, n, minimumRating)
             if (verbose):
                 print("Analyzing coverage, diversity, and novelty...")
             # Print user coverage with a minimum predicted rating of 4.0:

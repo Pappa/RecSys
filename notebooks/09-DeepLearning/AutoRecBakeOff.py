@@ -9,7 +9,6 @@ from recsys.MovieLens import MovieLens
 from recsys.algorithms.AutoRec import AutoRec
 from surprise import NormalPredictor
 from recsys.Evaluator import Evaluator
-from EvaluatedAlgorithm import EvaluatedAlgorithm
 
 import random
 import numpy as np
@@ -25,13 +24,13 @@ evaluator = Evaluator(evaluationData, rankings)
 
 #Autoencoder
 auto_rec = AutoRec()
-evaluator.AddAlgorithm(auto_rec, "AutoRec", algo_cls=EvaluatedAlgorithm)
+evaluator.AddAlgorithm(auto_rec, "AutoRec")
 
 # Just make random recommendations
 random_rec = NormalPredictor()
 evaluator.AddAlgorithm(random_rec, "Random")
 
 # Fight!
-evaluator.Evaluate(True)
+evaluator.Evaluate(True, minimumRating=0.0)
 
 evaluator.SampleTopNRecs(ml)

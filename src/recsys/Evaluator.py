@@ -15,15 +15,15 @@ class Evaluator:
         ed = EvaluationData(dataset, rankings)
         self.dataset = ed
         
-    def AddAlgorithm(self, algorithm, name, algo_cls=EvaluatedAlgorithm):
-        alg = algo_cls(algorithm, name)
+    def AddAlgorithm(self, algorithm, name):
+        alg = EvaluatedAlgorithm(algorithm, name)
         self.algorithms.append(alg)
         
-    def Evaluate(self, doTopN):
+    def Evaluate(self, doTopN, minimumRating):
         results = {}
         for algorithm in self.algorithms:
             print("Evaluating ", algorithm.GetName(), "...")
-            results[algorithm.GetName()] = algorithm.Evaluate(self.dataset, doTopN)
+            results[algorithm.GetName()] = algorithm.Evaluate(self.dataset, doTopN, minimumRating)
 
         # Print results
         print("\n")
