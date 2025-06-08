@@ -24,12 +24,12 @@ random.seed(0)
 evaluator = Evaluator(evaluationData, rankings)
 
 #Autoencoder
-AutoRec = AutoRecAlgorithm()
-evaluator.AddAlgorithm(AutoRec, "AutoRec", algo_cls=EvaluatedAlgorithm)
+auto_rec = AutoRecAlgorithm()
+evaluator.AddAlgorithm(auto_rec, "AutoRec", algo_cls=EvaluatedAlgorithm)
 
 # Just make random recommendations
-Random = NormalPredictor()
-evaluator.AddAlgorithm(Random, "Random")
+random_rec = NormalPredictor()
+evaluator.AddAlgorithm(random_rec, "Random")
 
 # Fight!
 evaluator.Evaluate(True)

@@ -4,7 +4,7 @@ Created on Thu May  3 10:45:33 2018
 
 @author: Frank
 """
-from RecommenderMetrics import RecommenderMetrics
+from recsys.RecommenderMetrics import RecommenderMetrics
 from recsys.EvaluationData import EvaluationData
 
 class EvaluatedAlgorithm:

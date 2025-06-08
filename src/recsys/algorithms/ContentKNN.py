@@ -14,9 +14,10 @@ import heapq
 
 class ContentKNN(AlgoBase):
 
-    def __init__(self, k=40, sim_options={}):
+    def __init__(self, k=40, sim_options={}, verbose=False):
         AlgoBase.__init__(self)
         self.k = k
+        self.verbose = verbose
 
     def fit(self, trainset):
         AlgoBase.fit(self, trainset)
@@ -35,7 +36,7 @@ class ContentKNN(AlgoBase):
         self.similarities = np.zeros((self.trainset.n_items, self.trainset.n_items))
         
         for thisRating in range(self.trainset.n_items):
-            if (thisRating % 100 == 0):
+            if self.verbose and (thisRating % 500 == 0):
                 print(thisRating, " of ", self.trainset.n_items)
             for otherRating in range(thisRating+1, self.trainset.n_items):
                 thisMovieID = int(self.trainset.to_raw_iid(thisRating))
@@ -46,7 +47,8 @@ class ContentKNN(AlgoBase):
                 self.similarities[thisRating, otherRating] = genreSimilarity * yearSimilarity
                 self.similarities[otherRating, thisRating] = self.similarities[thisRating, otherRating]
                 
-        print("...done.")
+        if self.verbose:
+            print("...done.")
                 
         return self
     

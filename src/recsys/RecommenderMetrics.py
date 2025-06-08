@@ -139,8 +139,11 @@ class RecommenderMetrics:
                 total += similarity
                 n += 1
 
-        S = total / n
-        return (1-S)
+        if (n > 0):
+            S = total / n
+            return (1-S)
+        else:
+            return 0
 
     def Novelty(topNPredicted, rankings):
         n = 0
