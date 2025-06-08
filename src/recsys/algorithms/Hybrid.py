@@ -1,13 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri May  4 13:08:25 2018
-
-@author: Frank
-"""
-
 from surprise import AlgoBase
 
-class HybridAlgorithm(AlgoBase):
+class Hybrid(AlgoBase):
 
     def __init__(self, algorithms, weights, sim_options={}):
         AlgoBase.__init__(self)
