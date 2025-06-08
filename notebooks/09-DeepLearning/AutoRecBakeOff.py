@@ -6,7 +6,7 @@ Created on Thu May  3 11:11:13 2018
 """
 
 from recsys.MovieLens import MovieLens
-from AutoRecAlgorithm import AutoRecAlgorithm
+from recsys.algorithms.AutoRec import AutoRec
 from surprise import NormalPredictor
 from recsys.Evaluator import Evaluator
 from EvaluatedAlgorithm import EvaluatedAlgorithm
@@ -24,7 +24,7 @@ random.seed(0)
 evaluator = Evaluator(evaluationData, rankings)
 
 #Autoencoder
-auto_rec = AutoRecAlgorithm()
+auto_rec = AutoRec()
 evaluator.AddAlgorithm(auto_rec, "AutoRec", algo_cls=EvaluatedAlgorithm)
 
 # Just make random recommendations
