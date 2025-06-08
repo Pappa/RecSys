@@ -1,9 +1,7 @@
 from surprise import AlgoBase
 from surprise import PredictionImpossible
-from recsys.MovieLens import MovieLens
 import numpy as np
 import tensorflow as tf
-from tensorflow.python.framework import ops
 
 class Recommender(object):
 
@@ -19,46 +17,29 @@ class Recommender(object):
                 
     def Train(self, X):
 
-        ops.reset_default_graph()
-
-        self.MakeGraph()
-
-        init = tf.global_variables_initializer()
-        self.sess = tf.Session()
-        self.sess.run(init)
+        # Initialize weights randomly (earlier versions of thie code had this block inside MakeGraph, but that was a bug.)
+        maxWeight = -4.0 * np.sqrt(6.0 / (self.hiddenDimensions + self.visibleDimensions))
+        self.weights = tf.Variable(tf.random.uniform([self.visibleDimensions, self.hiddenDimensions], minval=-maxWeight, maxval=maxWeight), tf.float32, name="weights")
+        self.hiddenBias = tf.Variable(tf.zeros([self.hiddenDimensions], tf.float32, name="hiddenBias"))
+        self.visibleBias = tf.Variable(tf.zeros([self.visibleDimensions], tf.float32, name="visibleBias"))
 
         for epoch in range(self.epochs):
-            np.random.shuffle(X)
             
             trX = np.array(X)
             for i in range(0, trX.shape[0], self.batchSize):
-                self.sess.run(self.update, feed_dict={self.X: trX[i:i+self.batchSize]})
+                epochX = trX[i:i+self.batchSize]
+                self.MakeGraph(epochX)
 
             print("Trained epoch ", epoch)
 
 
     def GetRecommendations(self, inputUser):
-                 
-        hidden = tf.nn.sigmoid(tf.matmul(self.X, self.weights) + self.hiddenBias)
-        visible = tf.nn.sigmoid(tf.matmul(hidden, tf.transpose(self.weights)) + self.visibleBias)
-
-        feed = self.sess.run(hidden, feed_dict={ self.X: inputUser} )
-        rec = self.sess.run(visible, feed_dict={ hidden: feed} )
+        
+        feed = self.MakeHidden(inputUser)
+        rec = self.MakeVisible(feed)
         return rec[0]       
 
-    def MakeGraph(self):
-
-        tf.set_random_seed(0)
-        
-        # Create variables for the graph, weights and biases
-        self.X = tf.placeholder(tf.float32, [None, self.visibleDimensions], name="X")
-        
-        # Initialize weights randomly
-        maxWeight = -4.0 * np.sqrt(6.0 / (self.hiddenDimensions + self.visibleDimensions))
-        self.weights = tf.Variable(tf.random_uniform([self.visibleDimensions, self.hiddenDimensions], minval=-maxWeight, maxval=maxWeight), tf.float32, name="weights")
-        
-        self.hiddenBias = tf.Variable(tf.zeros([self.hiddenDimensions], tf.float32, name="hiddenBias"))
-        self.visibleBias = tf.Variable(tf.zeros([self.visibleDimensions], tf.float32, name="visibleBias"))
+    def MakeGraph(self, inputUser):
         
         # Perform Gibbs Sampling for Contrastive Divergence, per the paper we assume k=1 instead of iterating over the 
         # forward pass multiple times since it seems to work just fine
@@ -66,18 +47,18 @@ class Recommender(object):
         # Forward pass
         # Sample hidden layer given visible...
         # Get tensor of hidden probabilities
-        hProb0 = tf.nn.sigmoid(tf.matmul(self.X, self.weights) + self.hiddenBias)
+        hProb0 = tf.nn.sigmoid(tf.matmul(inputUser, self.weights) + self.hiddenBias)
         # Sample from all of the distributions
-        hSample = tf.nn.relu(tf.sign(hProb0 - tf.random_uniform(tf.shape(hProb0))))
+        hSample = tf.nn.relu(tf.sign(hProb0 - tf.random.uniform(tf.shape(hProb0))))
         # Stitch it together
-        forward = tf.matmul(tf.transpose(self.X), hSample)
+        forward = tf.matmul(tf.transpose(inputUser), hSample)
         
         # Backward pass
         # Reconstruct visible layer given hidden layer sample
         v = tf.matmul(hSample, tf.transpose(self.weights)) + self.visibleBias
         
         # Build up our mask for missing ratings
-        vMask = tf.sign(self.X) # Make sure everything is 0 or 1
+        vMask = tf.sign(inputUser) # Make sure everything is 0 or 1
         vMask3D = tf.reshape(vMask, [tf.shape(v)[0], -1, self.ratingValues]) # Reshape into arrays of individual ratings
         vMask3D = tf.reduce_max(vMask3D, axis=[2], keepdims=True) # Use reduce_max to either give us 1 for ratings that exist, and 0 for missing ratings
         
@@ -95,12 +76,22 @@ class Recommender(object):
         # Update hidden bias, minimizing the divergence in the hidden nodes
         hiddenBiasUpdate = self.hiddenBias.assign_add(self.learningRate * tf.reduce_mean(hProb0 - hProb1, 0))
         # Update the visible bias, minimizng divergence in the visible results
-        visibleBiasUpdate = self.visibleBias.assign_add(self.learningRate * tf.reduce_mean(self.X - vProb, 0))
+        visibleBiasUpdate = self.visibleBias.assign_add(self.learningRate * tf.reduce_mean(inputUser - vProb, 0))
 
         self.update = [weightUpdate, hiddenBiasUpdate, visibleBiasUpdate]
         
+    def MakeHidden(self, inputUser):
+        hidden = tf.nn.sigmoid(tf.matmul(inputUser, self.weights) + self.hiddenBias)
+        self.MakeGraph(inputUser)
+        return hidden
     
-class RBMAlgorithm(AlgoBase):
+    def MakeVisible(self, feed):
+        visible = tf.nn.sigmoid(tf.matmul(feed, tf.transpose(self.weights)) + self.visibleBias)
+        #self.MakeGraph(feed)
+        return visible
+
+
+class RBM(AlgoBase):
 
     def __init__(self, epochs=20, hiddenDim=100, learningRate=0.001, batchSize=100, sim_options={}):
         AlgoBase.__init__(self)
@@ -108,30 +99,12 @@ class RBMAlgorithm(AlgoBase):
         self.hiddenDim = hiddenDim
         self.learningRate = learningRate
         self.batchSize = batchSize
-        self.ml = MovieLens()
-        self.ml.loadMovieLensLatestSmall()
-        self.stoplist = ["sex", "drugs", "rock n roll"]
-        
-    def buildStoplist(self, trainset):
-        self.stoplistLookup = {}
-        for iiid in trainset.all_items():
-            self.stoplistLookup[iiid] = False
-            movieID = trainset.to_raw_iid(iiid)
-            title = self.ml.getMovieName(int(movieID))
-            if (title):
-                title = title.lower()
-                for term in self.stoplist:
-                    if term in title:
-                        print ("Blocked ", title)
-                        self.stoplistLookup[iiid] = True    
         
     def softmax(self, x):
         return np.exp(x) / np.sum(np.exp(x), axis=0)
 
     def fit(self, trainset):
         AlgoBase.fit(self, trainset)
-        
-        self.buildStoplist(trainset)
 
         numUsers = trainset.n_users
         numItems = trainset.n_items
@@ -139,9 +112,8 @@ class RBMAlgorithm(AlgoBase):
         trainingMatrix = np.zeros([numUsers, numItems, 10], dtype=np.float32)
         
         for (uid, iid, rating) in trainset.all_ratings():
-            if not self.stoplistLookup[iid]:
-                adjustedRating = int(float(rating)*2.0) - 1
-                trainingMatrix[int(uid), int(iid), adjustedRating] = 1
+            adjustedRating = int(float(rating)*2.0) - 1
+            trainingMatrix[int(uid), int(iid), adjustedRating] = 1
         
         # Flatten to a 2D array, with nodes for each possible rating type on each possible item, for every user.
         trainingMatrix = np.reshape(trainingMatrix, [trainingMatrix.shape[0], -1])

@@ -6,7 +6,7 @@ Created on Thu May  3 11:11:13 2018
 """
 
 from recsys.MovieLens import MovieLens
-from RBMAlgorithm import RBMAlgorithm
+from recsys.algorithms.RBM import RBM
 from surprise import NormalPredictor
 from recsys.Evaluator import Evaluator
 
@@ -23,7 +23,7 @@ random.seed(0)
 evaluator = Evaluator(evaluationData, rankings)
 
 #RBM
-RBM = RBMAlgorithm(epochs=20)
+RBM = RBM(epochs=20)
 evaluator.AddAlgorithm(RBM, "RBM")
 
 # Just make random recommendations

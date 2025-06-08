@@ -1,7 +1,7 @@
 from surprise import AlgoBase
 from surprise import PredictionImpossible
-import numpy as np
 from recsys.MovieLens import MovieLens
+import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
@@ -99,8 +99,8 @@ class Recommender(object):
 
         self.update = [weightUpdate, hiddenBiasUpdate, visibleBiasUpdate]
         
-
-class RBMAlgorithm(AlgoBase):
+    
+class RBM(AlgoBase):
 
     def __init__(self, epochs=20, hiddenDim=100, learningRate=0.001, batchSize=100, sim_options={}):
         AlgoBase.__init__(self)
