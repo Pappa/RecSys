@@ -20,11 +20,11 @@ class Recommender(object):
         self.initialize_weights_biases()
         for epoch in range(self.epochs):
             for i in range(0, X.shape[0], self.batch_size):
-                epochX = X[i:i+self.batch_size]
-                self.run_optimization(epochX)
+                epoch_x = X[i:i+self.batch_size]
+                self.run_optimization(epoch_x)
 
 
-            print("Trained epoch ", epoch)
+            print(f"Trained epoch {epoch}")
 
     def get_recommendations(self, input_user):
                 
@@ -106,7 +106,7 @@ class AutoRec(AlgoBase):
         
         for uiid in range(trainset.n_users):
             if (uiid % 50 == 0):
-                print("Processing user ", uiid)
+                print(f"Processing user {uiid}")
             recs = autoRec.get_recommendations([training_matrix[uiid]])
             
             for item_id, rec in enumerate(recs):

@@ -6,7 +6,7 @@ from pyspark.sql import Row
 import csv
 
 
-def loadMovieNames():
+def load_movie_names():
     movie_id_to_name_map = {}
     with open("../ml-20m/movies.csv", newline="", encoding="ISO-8859-1") as csvfile:
         movie_reader = csv.reader(csvfile)
@@ -27,13 +27,13 @@ if __name__ == "__main__":
 
     lines = spark.read.option("header", "true").csv("../ml-20m/ratings.csv").rdd
 
-    ratingsRDD = lines.map(
+    ratings_rdd = lines.map(
         lambda p: Row(
             userId=int(p[0]), movieId=int(p[1]), rating=float(p[2]), timestamp=int(p[3])
         )
     )
 
-    ratings = spark.createDataFrame(ratingsRDD)
+    ratings = spark.createDataFrame(ratings_rdd)
 
     (training, test) = ratings.randomSplit([0.8, 0.2])
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     spark.stop()
 
-    movie_id_to_name_map = loadMovieNames()
+    movie_id_to_name_map = load_movie_names()
 
     for row in sample_user_recs:
         for rec in row.recommendations:

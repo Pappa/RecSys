@@ -10,13 +10,13 @@ if __name__ == "__main__":
 
     lines = spark.read.option("header", "true").csv("../../src/data/ratings.csv").rdd
 
-    ratingsRDD = lines.map(
+    ratings_rdd = lines.map(
         lambda p: Row(
             userId=int(p[0]), movieId=int(p[1]), rating=float(p[2]), timestamp=int(p[3])
         )
     )
 
-    ratings = spark.createDataFrame(ratingsRDD)
+    ratings = spark.createDataFrame(ratings_rdd)
 
     (training, test) = ratings.randomSplit([0.8, 0.2])
 

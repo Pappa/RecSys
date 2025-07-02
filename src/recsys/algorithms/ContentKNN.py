@@ -40,7 +40,9 @@ class ContentKNN(AlgoBase):
                 year_similarity = self.compute_year_similarity(
                     movie_id, other_movie_id, years
                 )
-                # mesSimilarity = self.compute_mise_en_scene_similarity(thisMovieID, otherMovieID, mes)
+                # mes_similarity = self.compute_mise_en_scene_similarity(
+                #     movie_id, other_movie_id, mes
+                # )
                 self.similarities[rating, other_rating] = (
                     genre_similarity * year_similarity
                 )

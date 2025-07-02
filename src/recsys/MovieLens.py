@@ -85,7 +85,7 @@ class MovieLens:
                 movie_id = int(row[1])
                 ratings[movie_id] += 1
         rank = 1
-        for movie_id, ratingCount in sorted(
+        for movie_id, rating_count in sorted(
             ratings.items(), key=lambda x: x[1], reverse=True
         ):
             rankings[movie_id] = rank
