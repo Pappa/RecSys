@@ -15,9 +15,9 @@ class MovieLens:
     def load(cls, *args, **kwargs):
         lens = MovieLens()
         print("Loading movie ratings...")
-        data = lens.loadMovieLensLatestSmall()
+        data = lens.load_movielens_data()
         print("\nComputing movie popularity ranks so we can measure novelty later...")
-        rankings = lens.getPopularityRanks()
+        rankings = lens.get_popularity_ranks()
         return (lens, data, rankings)
 
     def __init__(self) -> None:
@@ -28,7 +28,7 @@ class MovieLens:
             self._path_base + "/data/LLVisualFeatures13K_Log.csv"
         ).resolve()
 
-    def loadMovieLensLatestSmall(self):
+    def load_movielens_data(self):
         self.movie_id_to_name_map = {}
         self.name_to_movie_id_map = {}
 
@@ -40,137 +40,136 @@ class MovieLens:
             movie_reader = csv.reader(csvfile)
             next(movie_reader)  # skip header row
             for row in movie_reader:
-                movieID = int(row[0])
-                movieName = row[1]
-                self.movie_id_to_name_map[movieID] = movieName
-                self.name_to_movie_id_map[movieName] = movieID
+                movie_id = int(row[0])
+                movie_name = row[1]
+                self.movie_id_to_name_map[movie_id] = movie_name
+                self.name_to_movie_id_map[movie_name] = movie_id
 
         return ratings_dataset
 
-    def getNewMovies(self):
-        newMovies = []
-        years = self.getYears()
+    def get_new_movies(self):
+        new_movies = []
+        years = self.get_years()
         # What's the newest year in our data?
-        latestYear = max(years.values())
-        print("Newest year is ", latestYear)
-        for movieID, year in years.items():
-            if year == latestYear:
-                newMovies.append(movieID)
-                # print (self.getMovieName(movieID))
-        return newMovies
+        latest_year = max(years.values())
+        for movie_id, year in years.items():
+            if year == latest_year:
+                new_movies.append(movie_id)
+        return new_movies
 
-    def getUserRatings(self, user):
-        userRatings = []
-        hitUser = False
+    def get_user_ratings(self, user):
+        user_ratings = []
+        hit_user = False
         with open(self._ratings_path, newline="") as csvfile:
             rating_reader = csv.reader(csvfile)
             next(rating_reader)  # skip header row
             for row in rating_reader:
-                userID = int(row[0])
-                if user == userID:
-                    movieID = int(row[1])
+                user_id = int(row[0])
+                if user == user_id:
+                    movie_id = int(row[1])
                     rating = float(row[2])
-                    userRatings.append((movieID, rating))
-                    hitUser = True
-                if hitUser and (user != userID):
+                    user_ratings.append((movie_id, rating))
+                    hit_user = True
+                if hit_user and (user != user_id):
                     break
 
-        return userRatings
+        return user_ratings
 
-    def getPopularityRanks(self):
+    def get_popularity_ranks(self):
         ratings = defaultdict(int)
         rankings = defaultdict(int)
         with open(self._ratings_path, newline="") as csvfile:
             rating_reader = csv.reader(csvfile)
             next(rating_reader)  # skip header row
             for row in rating_reader:
-                movieID = int(row[1])
-                ratings[movieID] += 1
+                movie_id = int(row[1])
+                ratings[movie_id] += 1
         rank = 1
-        for movieID, ratingCount in sorted(
+        for movie_id, ratingCount in sorted(
             ratings.items(), key=lambda x: x[1], reverse=True
         ):
-            rankings[movieID] = rank
+            rankings[movie_id] = rank
             rank += 1
         return rankings
 
     def getGenres(self):
         genres = defaultdict(list)
-        genreIDs = {}
-        maxGenreID = 0
+        genre_ids = {}
+        max_genre_id = 0
         with open(self._movies_path, newline="", encoding="ISO-8859-1") as csvfile:
             movie_reader = csv.reader(csvfile)
             next(movie_reader)  # skip header row
             for row in movie_reader:
-                movieID = int(row[0])
+                movie_id = int(row[0])
                 genreList = row[2].split("|")
                 genreIDList = []
                 for genre in genreList:
-                    if genre in genreIDs:
-                        genreID = genreIDs[genre]
+                    if genre in genre_ids:
+                        genreID = genre_ids[genre]
                     else:
-                        genreID = maxGenreID
-                        genreIDs[genre] = genreID
-                        maxGenreID += 1
+                        genreID = max_genre_id
+                        genre_ids[genre] = genreID
+                        max_genre_id += 1
                     genreIDList.append(genreID)
-                genres[movieID] = genreIDList
+                genres[movie_id] = genreIDList
         # Convert integer-encoded genre lists to bitfields that we can treat as vectors
-        for movieID, genreIDList in genres.items():
-            bitfield = [0] * maxGenreID
+        for movie_id, genreIDList in genres.items():
+            bitfield = [0] * max_genre_id
             for genreID in genreIDList:
                 bitfield[genreID] = 1
-            genres[movieID] = bitfield
+            genres[movie_id] = bitfield
 
         return genres
 
-    def getYears(self):
+    def get_years(self):
         p = re.compile(r"(?:\((\d{4})\))?\s*$")
         years = defaultdict(int)
         with open(self._movies_path, newline="", encoding="ISO-8859-1") as csvfile:
             movie_reader = csv.reader(csvfile)
             next(movie_reader)  # skip header row
             for row in movie_reader:
-                movieID = int(row[0])
+                movie_id = int(row[0])
                 title = row[1]
                 m = p.search(title)
                 year = m.group(1)
                 if year:
-                    years[movieID] = int(year)
+                    years[movie_id] = int(year)
         return years
 
-    def getMiseEnScene(self):
+    def get_mis_en_scene(self):
         mes = defaultdict(list)
         with open(self._visual_features_path, newline="") as csvfile:
             mes_reader = csv.reader(csvfile)
             next(mes_reader)  # skip header row
             for row in mes_reader:
-                movieID = int(row[0])
-                avgShotLength = float(row[1])
-                meanColorVariance = float(row[2])
-                stddevColorVariance = float(row[3])
-                meanMotion = float(row[4])
-                stddevMotion = float(row[5])
-                meanLightingKey = float(row[6])
-                numShots = float(row[7])
-                mes[movieID] = [
-                    avgShotLength,
-                    meanColorVariance,
-                    stddevColorVariance,
-                    meanMotion,
-                    stddevMotion,
-                    meanLightingKey,
-                    numShots,
+                print(f"mes row: {type(row)}")
+                movie_id = int(row[0])
+                avg_shot_length = float(row[1])
+                mean_color_variance = float(row[2])
+                std_dev_color_variance = float(row[3])
+                mean_motion = float(row[4])
+                std_dev_motion = float(row[5])
+                mean_lighting_key = float(row[6])
+                num_shots = float(row[7])
+                mes[movie_id] = [
+                    avg_shot_length,
+                    mean_color_variance,
+                    std_dev_color_variance,
+                    mean_motion,
+                    std_dev_motion,
+                    mean_lighting_key,
+                    num_shots,
                 ]
         return mes
 
-    def getMovieName(self, movieID):
-        if movieID in self.movie_id_to_name_map:
-            return self.movie_id_to_name_map[movieID]
+    def get_movie_name(self, movie_id):
+        if movie_id in self.movie_id_to_name_map:
+            return self.movie_id_to_name_map[movie_id]
         else:
             return ""
 
-    def getMovieID(self, movieName):
-        if movieName in self.name_to_movie_id_map:
-            return self.name_to_movie_id_map[movieName]
+    def get_movie_id(self, movie_name):
+        if movie_name in self.name_to_movie_id_map:
+            return self.name_to_movie_id_map[movie_name]
         else:
             return 0

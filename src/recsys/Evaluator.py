@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May  3 10:22:34 2018
-
-@author: Frank
-"""
-
-from recsys.EvaluationData import EvaluationData
+from recsys.EvaluationDataset import EvaluationDataset
 from recsys.AlgorithmEvaluator import AlgorithmEvaluator
 
 
@@ -13,25 +6,24 @@ class Evaluator:
     algorithms: list[AlgorithmEvaluator] = []
 
     def __init__(self, dataset, rankings):
-        self.dataset = EvaluationData(dataset, rankings)
+        self.dataset = EvaluationDataset(dataset, rankings)
 
     def add_algorithm(self, algorithm, name):
-        print(f"Adding algorithm {algorithm} with name {name}")
         alg = AlgorithmEvaluator(algorithm, name)
         self.algorithms.append(alg)
 
-    def evaluate(self, doTopN, minimumRating=0.0):
+    def evaluate(self, top_n_metrics=False, minimum_rating=0.0):
         results = {}
         for algorithm in self.algorithms:
             print("Evaluating ", algorithm.name, "...")
             results[algorithm.name] = algorithm.evaluate(
-                self.dataset, doTopN, minimumRating
+                self.dataset, top_n_metrics, minimum_rating
             )
 
         # Print results
         print("\n")
 
-        if doTopN:
+        if top_n_metrics:
             print(
                 "{:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10} {:<10}".format(
                     "Algorithm",
@@ -71,7 +63,7 @@ class Evaluator:
         print("\nLegend:\n")
         print("RMSE:      Root Mean Squared Error. Lower values mean better accuracy.")
         print("MAE:       Mean Absolute Error. Lower values mean better accuracy.")
-        if doTopN:
+        if top_n_metrics:
             print(
                 "HR:        Hit Rate; how often we are able to recommend a left-out rating. Higher is better."
             )
@@ -92,27 +84,27 @@ class Evaluator:
                 "Novelty:   Average popularity rank of recommended items. Higher means more novel."
             )
 
-    def SampleTopNRecs(self, ml, testSubject=85, k=10):
+    def sample_top_n_recs(self, ml, test_subject=85, k=10):
         for algo in self.algorithms:
             print("\nUsing recommender ", algo.name)
 
             print("\nBuilding recommendation model...")
-            trainSet = self.dataset.GetFullTrainSet()
-            algo.algorithm.fit(trainSet)
+            train_set = self.dataset.GetFullTrainSet()
+            algo.algorithm.fit(train_set)
 
             print("Computing recommendations...")
-            testSet = self.dataset.GetAntiTestSetForUser(testSubject)
+            test_set = self.dataset.GetAntiTestSetForUser(test_subject)
 
-            predictions = algo.algorithm.test(testSet)
+            predictions = algo.algorithm.test(test_set)
 
             recommendations = []
 
             print("\nWe recommend:")
-            for userID, movieID, actualRating, estimatedRating, _ in predictions:
-                intMovieID = int(movieID)
-                recommendations.append((intMovieID, estimatedRating))
+            for user_id, movie_id, actual_rating, estimated_rating, _ in predictions:
+                int_movie_id = int(movie_id)
+                recommendations.append((int_movie_id, estimated_rating))
 
             recommendations.sort(key=lambda x: x[1], reverse=True)
 
             for ratings in recommendations[:10]:
-                print(ml.getMovieName(ratings[0]), ratings[1])
+                print(ml.get_movie_name(ratings[0]), ratings[1])
