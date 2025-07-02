@@ -5,37 +5,37 @@ from collections import defaultdict
 
 
 class RecommenderMetrics:
-    def MAE(predictions):
+    def mae(predictions):
         return accuracy.mae(predictions, verbose=False)
 
-    def RMSE(predictions):
+    def rmse(predictions):
         return accuracy.rmse(predictions, verbose=False)
 
-    def GetTopN(predictions, n=10, minimum_rating=4.0):
-        topN = defaultdict(list)
+    def get_top_n(predictions, n=10, minimum_rating=4.0):
+        top_n = defaultdict(list)
 
-        for userID, movieID, actualRating, estimatedRating, _ in predictions:
-            if estimatedRating >= minimum_rating:
-                topN[int(userID)].append((int(movieID), estimatedRating))
+        for user_id, movie_id, true_rating, predicted_rating, _ in predictions:
+            if predicted_rating >= minimum_rating:
+                top_n[int(user_id)].append((int(movie_id), predicted_rating))
 
-        for userID, ratings in topN.items():
+        for user_id, ratings in top_n.items():
             ratings.sort(key=lambda x: x[1], reverse=True)
-            topN[int(userID)] = ratings[:n]
+            top_n[int(user_id)] = ratings[:n]
 
-        return topN
+        return top_n
 
-    def HitRate(top_n_preds, loo_validation_set):
+    def hit_rate(top_n_preds, loo_validation_set):
         hits = 0
         total = 0
 
         # For each left-out rating
-        for leftOut in loo_validation_set:
-            userID = leftOut[0]
-            leftOutMovieID = leftOut[1]
+        for held_out_rating in loo_validation_set:
+            user_id = held_out_rating[0]
+            held_out_movie_id = held_out_rating[1]
             # Is it in the predicted top 10 for this user?
             hit = False
-            for movieID, predictedRating in top_n_preds[int(userID)]:
-                if int(leftOutMovieID) == int(movieID):
+            for movie_id, predicted_rating in top_n_preds[int(user_id)]:
+                if int(held_out_movie_id) == int(movie_id):
                     hit = True
                     break
             if hit:
@@ -46,24 +46,24 @@ class RecommenderMetrics:
         # Compute overall precision
         return hits / total
 
-    def CumulativeHitRate(top_n_preds, loo_validation_set, ratingCutoff=0):
+    def cumulative_hit_rate(top_n_preds, loo_validation_set, rating_cutoff=0):
         hits = 0
         total = 0
 
         # For each left-out rating
         for (
-            userID,
-            leftOutMovieID,
-            actualRating,
-            estimatedRating,
+            user_id,
+            held_out_movie_id,
+            true_rating,
+            predicted_rating,
             _,
         ) in loo_validation_set:
             # Only look at ability to recommend things the users actually liked...
-            if actualRating >= ratingCutoff:
+            if true_rating >= rating_cutoff:
                 # Is it in the predicted top 10 for this user?
                 hit = False
-                for movieID, predictedRating in top_n_preds[int(userID)]:
-                    if int(leftOutMovieID) == movieID:
+                for movie_id, predicted_rating in top_n_preds[int(user_id)]:
+                    if int(held_out_movie_id) == movie_id:
                         hit = True
                         break
                 if hit:
@@ -74,85 +74,85 @@ class RecommenderMetrics:
         # Compute overall precision
         return hits / total
 
-    def RatingHitRate(top_n_preds, loo_validation_set):
+    def rating_hit_rate(top_n_preds, loo_validation_set):
         hits = defaultdict(float)
         total = defaultdict(float)
 
         # For each left-out rating
         for (
-            userID,
-            leftOutMovieID,
-            actualRating,
-            estimatedRating,
+            user_id,
+            held_out_movie_id,
+            true_rating,
+            predicted_rating,
             _,
         ) in loo_validation_set:
             # Is it in the predicted top N for this user?
             hit = False
-            for movieID, predictedRating in top_n_preds[int(userID)]:
-                if int(leftOutMovieID) == movieID:
+            for movie_id, predicted_rating in top_n_preds[int(user_id)]:
+                if int(held_out_movie_id) == movie_id:
                     hit = True
                     break
             if hit:
-                hits[actualRating] += 1
+                hits[true_rating] += 1
 
-            total[actualRating] += 1
+            total[true_rating] += 1
 
         # Compute overall precision
         for rating in sorted(hits.keys()):
             print(rating, hits[rating] / total[rating])
 
-    def AverageReciprocalHitRank(top_n_preds, loo_validation_set):
+    def average_reciprocal_hit_rank(top_n_preds, loo_validation_set):
         summation = 0
         total = 0
         # For each left-out rating
         for (
-            userID,
-            leftOutMovieID,
-            actualRating,
-            estimatedRating,
+            user_id,
+            held_out_movie_id,
+            true_rating,
+            predicted_rating,
             _,
         ) in loo_validation_set:
             # Is it in the predicted top N for this user?
-            hitRank = 0
+            hit_rank = 0
             rank = 0
-            for movieID, predictedRating in top_n_preds[int(userID)]:
+            for movie_id, predicted_rating in top_n_preds[int(user_id)]:
                 rank = rank + 1
-                if int(leftOutMovieID) == movieID:
-                    hitRank = rank
+                if int(held_out_movie_id) == movie_id:
+                    hit_rank = rank
                     break
-            if hitRank > 0:
-                summation += 1.0 / hitRank
+            if hit_rank > 0:
+                summation += 1.0 / hit_rank
 
             total += 1
 
         return summation / total
 
     # What percentage of users have at least one "good" recommendation
-    def UserCoverage(top_n_preds, numUsers, ratingThreshold=0):
+    def user_coverage(top_n_preds, n_users, rating_threshold=0):
         hits = 0
-        for userID in top_n_preds.keys():
+        for user_id in top_n_preds.keys():
             hit = False
-            for movieID, predictedRating in top_n_preds[userID]:
-                if predictedRating >= ratingThreshold:
+            for movie_id, predicted_rating in top_n_preds[user_id]:
+                if predicted_rating >= rating_threshold:
                     hit = True
                     break
             if hit:
                 hits += 1
 
-        return hits / numUsers
+        return hits / n_users
 
-    def Diversity(top_n_preds, simsAlgo):
+    def diversity(top_n_preds, similarities_model):
         n = 0
         total = 0
-        simsMatrix = simsAlgo.compute_similarities()
-        for userID in top_n_preds.keys():
-            pairs = itertools.combinations(top_n_preds[userID], 2)
+        similarity_matrix = similarities_model.compute_similarities()
+        for user_id in top_n_preds.keys():
+            pairs = itertools.combinations(top_n_preds[user_id], 2)
             for pair in pairs:
                 movie1 = pair[0][0]
                 movie2 = pair[1][0]
-                innerID1 = simsAlgo.trainset.to_inner_iid(str(movie1))
-                innerID2 = simsAlgo.trainset.to_inner_iid(str(movie2))
-                similarity = simsMatrix[innerID1][innerID2]
+                inner_id1 = similarities_model.trainset.to_inner_iid(str(movie1))
+                inner_id2 = similarities_model.trainset.to_inner_iid(str(movie2))
+                similarity = similarity_matrix[inner_id1][inner_id2]
                 total += similarity
                 n += 1
 
@@ -162,13 +162,13 @@ class RecommenderMetrics:
         else:
             return 0
 
-    def Novelty(top_n_preds, rankings):
+    def novelty(top_n_preds, rankings):
         n = 0
         total = 0
-        for userID in top_n_preds.keys():
-            for rating in top_n_preds[userID]:
-                movieID = rating[0]
-                rank = rankings[movieID]
+        for user_id in top_n_preds.keys():
+            for rating in top_n_preds[user_id]:
+                movie_id = rating[0]
+                rank = rankings[movie_id]
                 total += rank
                 n += 1
         return total / n

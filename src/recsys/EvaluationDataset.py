@@ -18,8 +18,8 @@ class EvaluationDataset:
 
         # Build a "leave one out" train/test split for evaluating top-N recommenders
         # And build an anti-test-set for building predictions
-        LOOCV = LeaveOneOut(n_splits=1, random_state=1)
-        for train, test in LOOCV.split(data):
+        loo_iterator = LeaveOneOut(n_splits=1, random_state=1)
+        for train, test in loo_iterator.split(data):
             self._loo_train = train
             self._loo_test = test
 

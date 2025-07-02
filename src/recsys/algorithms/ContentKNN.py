@@ -19,7 +19,7 @@ class ContentKNN(AlgoBase):
 
         # Load up genre vectors for every movie
         ml = MovieLens()
-        genres = ml.getGenres()
+        genres = ml.get_genres()
         years = ml.get_years()
         mes = ml.get_mis_en_scene()
 
@@ -28,24 +28,24 @@ class ContentKNN(AlgoBase):
         # Compute genre distance for every movie combination as a 2x2 matrix
         self.similarities = np.zeros((self.trainset.n_items, self.trainset.n_items))
 
-        for thisRating in range(self.trainset.n_items):
-            if self.verbose and (thisRating % 500 == 0):
-                print(thisRating, " of ", self.trainset.n_items)
-            for otherRating in range(thisRating + 1, self.trainset.n_items):
-                thisMovieID = int(self.trainset.to_raw_iid(thisRating))
-                otherMovieID = int(self.trainset.to_raw_iid(otherRating))
-                genreSimilarity = self.computeGenreSimilarity(
-                    thisMovieID, otherMovieID, genres
+        for rating in range(self.trainset.n_items):
+            if self.verbose and (rating % 500 == 0):
+                print(rating, " of ", self.trainset.n_items)
+            for other_rating in range(rating + 1, self.trainset.n_items):
+                movie_id = int(self.trainset.to_raw_iid(rating))
+                other_movie_id = int(self.trainset.to_raw_iid(other_rating))
+                genre_similarity = self.compute_genre_similarity(
+                    movie_id, other_movie_id, genres
                 )
-                yearSimilarity = self.computeYearSimilarity(
-                    thisMovieID, otherMovieID, years
+                year_similarity = self.compute_year_similarity(
+                    movie_id, other_movie_id, years
                 )
-                # mesSimilarity = self.computeMiseEnSceneSimilarity(thisMovieID, otherMovieID, mes)
-                self.similarities[thisRating, otherRating] = (
-                    genreSimilarity * yearSimilarity
+                # mesSimilarity = self.compute_mise_en_scene_similarity(thisMovieID, otherMovieID, mes)
+                self.similarities[rating, other_rating] = (
+                    genre_similarity * year_similarity
                 )
-                self.similarities[otherRating, thisRating] = self.similarities[
-                    thisRating, otherRating
+                self.similarities[other_rating, rating] = self.similarities[
+                    rating, other_rating
                 ]
 
         if self.verbose:
@@ -53,39 +53,39 @@ class ContentKNN(AlgoBase):
 
         return self
 
-    def computeGenreSimilarity(self, movie1, movie2, genres):
-        genres1 = genres[movie1]
-        genres2 = genres[movie2]
-        sumxx, sumxy, sumyy = 0, 0, 0
+    def compute_genre_similarity(self, movie_id, other_movie_id, genres):
+        genres1 = genres[movie_id]
+        genres2 = genres[other_movie_id]
+        sum_xx, sum_xy, sum_yy = 0, 0, 0
         for i in range(len(genres1)):
             x = genres1[i]
             y = genres2[i]
-            sumxx += x * x
-            sumyy += y * y
-            sumxy += x * y
+            sum_xx += x * x
+            sum_yy += y * y
+            sum_xy += x * y
 
-        return sumxy / math.sqrt(sumxx * sumyy)
+        return sum_xy / math.sqrt(sum_xx * sum_yy)
 
-    def computeYearSimilarity(self, movie1, movie2, years):
-        diff = abs(years[movie1] - years[movie2])
+    def compute_year_similarity(self, movie_id, other_movie_id, years):
+        diff = abs(years[movie_id] - years[other_movie_id])
         sim = math.exp(-diff / 10.0)
         return sim
 
-    def computeMiseEnSceneSimilarity(self, movie1, movie2, mes):
-        mes1 = mes[movie1]
-        mes2 = mes[movie2]
+    def compute_mise_en_scene_similarity(self, movie_id, other_movie_id, mes):
+        mes1 = mes[movie_id]
+        mes2 = mes[other_movie_id]
         if mes1 and mes2:
-            shotLengthDiff = math.fabs(mes1[0] - mes2[0])
-            colorVarianceDiff = math.fabs(mes1[1] - mes2[1])
-            motionDiff = math.fabs(mes1[3] - mes2[3])
-            lightingDiff = math.fabs(mes1[5] - mes2[5])
-            numShotsDiff = math.fabs(mes1[6] - mes2[6])
+            shot_length_diff = math.fabs(mes1[0] - mes2[0])
+            color_variance_diff = math.fabs(mes1[1] - mes2[1])
+            motion_diff = math.fabs(mes1[3] - mes2[3])
+            lighting_diff = math.fabs(mes1[5] - mes2[5])
+            num_shots_diff = math.fabs(mes1[6] - mes2[6])
             return (
-                shotLengthDiff
-                * colorVarianceDiff
-                * motionDiff
-                * lightingDiff
-                * numShotsDiff
+                shot_length_diff
+                * color_variance_diff
+                * motion_diff
+                * lighting_diff
+                * num_shots_diff
             )
         else:
             return 0
@@ -97,22 +97,22 @@ class ContentKNN(AlgoBase):
         # Build up similarity scores between this item and everything the user rated
         neighbors = []
         for rating in self.trainset.ur[u]:
-            genreSimilarity = self.similarities[i, rating[0]]
-            neighbors.append((genreSimilarity, rating[1]))
+            genre_similarity = self.similarities[i, rating[0]]
+            neighbors.append((genre_similarity, rating[1]))
 
         # Extract the top-K most-similar ratings
         k_neighbors = heapq.nlargest(self.k, neighbors, key=lambda t: t[0])
 
         # Compute average sim score of K neighbors weighted by user ratings
-        simTotal = weightedSum = 0
-        for simScore, rating in k_neighbors:
-            if simScore > 0:
-                simTotal += simScore
-                weightedSum += simScore * rating
+        sim_total = weighted_sum = 0
+        for sim_score, rating in k_neighbors:
+            if sim_score > 0:
+                sim_total += sim_score
+                weighted_sum += sim_score * rating
 
-        if simTotal == 0:
+        if sim_total == 0:
             raise PredictionImpossible("No neighbors")
 
-        predictedRating = weightedSum / simTotal
+        predicted_rating = weighted_sum / sim_total
 
-        return predictedRating
+        return predicted_rating

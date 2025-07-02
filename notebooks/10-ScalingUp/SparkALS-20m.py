@@ -9,12 +9,12 @@ import csv
 def loadMovieNames():
     movie_id_to_name_map = {}
     with open("../ml-20m/movies.csv", newline="", encoding="ISO-8859-1") as csvfile:
-        movieReader = csv.reader(csvfile)
-        next(movieReader)  # Skip header line
-        for row in movieReader:
-            movieID = int(row[0])
-            movieName = row[1]
-            movie_id_to_name_map[movieID] = movieName
+        movie_reader = csv.reader(csvfile)
+        next(movie_reader)  # Skip header line
+        for row in movie_reader:
+            movie_id = int(row[0])
+            movie_name = row[1]
+            movie_id_to_name_map[movie_id] = movie_name
     return movie_id_to_name_map
 
 
@@ -54,15 +54,17 @@ if __name__ == "__main__":
     rmse = evaluator.evaluate(predictions)
     print("Root-mean-square error = " + str(rmse))
 
-    userRecs = model.recommendForAllUsers(10)
+    user_recs = model.recommendForAllUsers(10)
 
-    user85Recs = userRecs.filter(userRecs["userId"] == 85).collect()
+    sample_user_id = 85
+
+    sample_user_recs = user_recs.filter(user_recs["userId"] == sample_user_id).collect()
 
     spark.stop()
 
     movie_id_to_name_map = loadMovieNames()
 
-    for row in user85Recs:
+    for row in sample_user_recs:
         for rec in row.recommendations:
             if rec.movieId in movie_id_to_name_map:
                 print(movie_id_to_name_map[rec.movieId])

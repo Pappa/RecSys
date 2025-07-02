@@ -5,31 +5,31 @@ import tensorflow as tf
 
 class Recommender(object):
 
-    def __init__(self, visibleDimensions, epochs=200, hiddenDimensions=50, learningRate=0.1, batchSize=100):
+    def __init__(self, visible_dimensions, epochs=200, hidden_dimensions=50, learning_rate=0.1, batch_size=100):
 
-        self.visibleDimensions = visibleDimensions
+        self.visible_dimensions = visible_dimensions
         self.epochs = epochs
-        self.hiddenDimensions = hiddenDimensions
-        self.learningRate = learningRate
-        self.batchSize = batchSize
-        self.optimizer = tf.keras.optimizers.RMSprop(self.learningRate)
+        self.hidden_dimensions = hidden_dimensions
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
+        self.optimizer = tf.keras.optimizers.RMSprop(self.learning_rate)
         
                 
-    def Train(self, X):
+    def train(self, X):
         
         self.initialize_weights_biases()
         for epoch in range(self.epochs):
-            for i in range(0, X.shape[0], self.batchSize):
-                epochX = X[i:i+self.batchSize]
+            for i in range(0, X.shape[0], self.batch_size):
+                epochX = X[i:i+self.batch_size]
                 self.run_optimization(epochX)
 
 
             print("Trained epoch ", epoch)
 
-    def GetRecommendations(self, inputUser):
+    def get_recommendations(self, input_user):
                 
         # Feed through a single user and return predictions from the output layer.
-        rec = self.neural_net(inputUser)
+        rec = self.neural_net(input_user)
         
         # It is being used as the return type is Eager Tensor.
         return rec[0]
@@ -37,17 +37,17 @@ class Recommender(object):
     def initialize_weights_biases(self):
         # Create varaibles for weights for the encoding (visible->hidden) and decoding (hidden->output) stages, randomly initialized
         self.weights = {
-            'h1': tf.Variable(tf.random.normal([self.visibleDimensions, self.hiddenDimensions])),
-            'out': tf.Variable(tf.random.normal([self.hiddenDimensions, self.visibleDimensions]))
-            }
+            'h1': tf.Variable(tf.random.normal([self.visible_dimensions, self.hidden_dimensions])),
+            'out': tf.Variable(tf.random.normal([self.hidden_dimensions, self.visible_dimensions]))
+        }
         
         # Create biases
         self.biases = {
-            'b1': tf.Variable(tf.random.normal([self.hiddenDimensions])),
-            'out': tf.Variable(tf.random.normal([self.visibleDimensions]))
-            }
+            'b1': tf.Variable(tf.random.normal([self.hidden_dimensions])),
+            'out': tf.Variable(tf.random.normal([self.visible_dimensions]))
+        }
     
-    def neural_net(self, inputUser):
+    def neural_net(self, input_user):
 
         #tf.set_random_seed(0)
         
@@ -56,20 +56,20 @@ class Recommender(object):
         # this script.
         
         # Create the input layer
-        self.inputLayer = inputUser
+        self.input_layer = input_user
         
         # hidden layer
-        hidden = tf.nn.sigmoid(tf.add(tf.matmul(self.inputLayer, self.weights['h1']), self.biases['b1']))
+        hidden = tf.nn.sigmoid(tf.add(tf.matmul(self.input_layer, self.weights['h1']), self.biases['b1']))
         
         # output layer for our predictions.
-        self.outputLayer = tf.nn.sigmoid(tf.add(tf.matmul(hidden, self.weights['out']), self.biases['out']))
+        self.output_layer = tf.nn.sigmoid(tf.add(tf.matmul(hidden, self.weights['out']), self.biases['out']))
         
-        return self.outputLayer
+        return self.output_layer
     
-    def run_optimization(self, inputUser):
+    def run_optimization(self, input_user):
         with tf.GradientTape() as g:
-            pred = self.neural_net(inputUser)
-            loss = tf.keras.losses.MSE(inputUser, pred)
+            pred = self.neural_net(input_user)
+            loss = tf.keras.losses.MSE(input_user, pred)
             
         trainable_variables = list(self.weights.values()) + list(self.biases.values())
         
@@ -80,37 +80,37 @@ class Recommender(object):
 
 class AutoRec(AlgoBase):
 
-    def __init__(self, epochs=100, hiddenDim=100, learningRate=0.01, batchSize=100, sim_options={}):
+    def __init__(self, epochs=100, hidden_dim=100, learning_rate=0.01, batch_size=100, sim_options={}):
         AlgoBase.__init__(self)
         self.epochs = epochs
-        self.hiddenDim = hiddenDim
-        self.learningRate = learningRate
-        self.batchSize = batchSize
+        self.hidden_dim = hidden_dim
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
 
     def fit(self, trainset):
         AlgoBase.fit(self, trainset)
 
-        numUsers = trainset.n_users
-        numItems = trainset.n_items
+        n_users = trainset.n_users
+        n_items = trainset.n_items
         
-        trainingMatrix = np.zeros([numUsers, numItems], dtype=np.float32)
+        training_matrix = np.zeros([n_users, n_items], dtype=np.float32)
         
         for (uid, iid, rating) in trainset.all_ratings():
-            trainingMatrix[int(uid), int(iid)] = rating / 5.0
+            training_matrix[int(uid), int(iid)] = rating / 5.0
         
         # Create an RBM with (num items * rating values) visible nodes
-        autoRec = Recommender(trainingMatrix.shape[1], hiddenDimensions=self.hiddenDim, learningRate=self.learningRate, batchSize=self.batchSize, epochs=self.epochs)
-        autoRec.Train(trainingMatrix)
+        autoRec = Recommender(training_matrix.shape[1], hidden_dimensions=self.hidden_dim, learning_rate=self.learning_rate, batch_size=self.batch_size, epochs=self.epochs)
+        autoRec.train(training_matrix)
 
-        self.predictedRatings = np.zeros([numUsers, numItems], dtype=np.float32)
+        self.predicted_ratings = np.zeros([n_users, n_items], dtype=np.float32)
         
         for uiid in range(trainset.n_users):
             if (uiid % 50 == 0):
                 print("Processing user ", uiid)
-            recs = autoRec.GetRecommendations([trainingMatrix[uiid]])
+            recs = autoRec.get_recommendations([training_matrix[uiid]])
             
-            for itemID, rec in enumerate(recs):
-                self.predictedRatings[uiid, itemID] = rec * 5.0
+            for item_id, rec in enumerate(recs):
+                self.predicted_ratings[uiid, item_id] = rec * 5.0
         
         return self
 
@@ -120,7 +120,7 @@ class AutoRec(AlgoBase):
         if not (self.trainset.knows_user(u) and self.trainset.knows_item(i)):
             raise PredictionImpossible('User and/or item is unkown.')
         
-        rating = self.predictedRatings[u, i]
+        rating = self.predicted_ratings[u, i]
         
         if (rating < 0.001):
             raise PredictionImpossible('No valid prediction exists.')

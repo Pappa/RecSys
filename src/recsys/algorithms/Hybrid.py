@@ -17,13 +17,13 @@ class Hybrid(AlgoBase):
 
     def estimate(self, u, i):
         
-        sumScores = 0
-        sumWeights = 0
+        sum_scores = 0
+        sum_weights = 0
         
         for idx in range(len(self.algorithms)):
-            sumScores += self.algorithms[idx].estimate(u, i) * self.weights[idx]
-            sumWeights += self.weights[idx]
+            sum_scores += self.algorithms[idx].estimate(u, i) * self.weights[idx]
+            sum_weights += self.weights[idx]
             
-        return sumScores / sumWeights
+        return sum_scores / sum_weights
 
     

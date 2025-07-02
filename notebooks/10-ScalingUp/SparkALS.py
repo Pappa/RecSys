@@ -37,15 +37,17 @@ if __name__ == "__main__":
     rmse = evaluator.evaluate(predictions)
     print("Root-mean-square error = " + str(rmse))
 
-    userRecs = model.recommendForAllUsers(10)
+    user_recs = model.recommendForAllUsers(10)
 
-    user85Recs = userRecs.filter(userRecs["userId"] == 85).collect()
+    sample_user_id = 85
+
+    sample_user_recs = user_recs.filter(user_recs["userId"] == sample_user_id).collect()
 
     spark.stop()
 
     ml = MovieLens()
     ml.load_movielens_data()
 
-    for row in user85Recs:
+    for row in sample_user_recs:
         for rec in row.recommendations:
             print(ml.get_movie_name(rec.movieId))

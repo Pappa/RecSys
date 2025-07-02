@@ -30,8 +30,8 @@ class AlgorithmEvaluator:
         self._logger.info("Evaluating accuracy...")
         self._algorithm.fit(evaluation_dataset.train_set)
         predictions = self._algorithm.test(evaluation_dataset.test_set)
-        self._accuracy_metrics["RMSE"] = RecommenderMetrics.RMSE(predictions)
-        self._accuracy_metrics["MAE"] = RecommenderMetrics.MAE(predictions)
+        self._accuracy_metrics["RMSE"] = RecommenderMetrics.rmse(predictions)
+        self._accuracy_metrics["MAE"] = RecommenderMetrics.mae(predictions)
 
     def _evaluate_top_n_metrics(self, evaluation_dataset, n, minimum_rating):
         # Evaluate top-10 with Leave One Out validation
@@ -43,20 +43,20 @@ class AlgorithmEvaluator:
             evaluation_dataset.loo_anti_test_set
         )
         # Compute top 10 recs for each user
-        top_n_preds = RecommenderMetrics.GetTopN(
+        top_n_preds = RecommenderMetrics.get_top_n(
             all_preds, n, minimum_rating
         )
         self._logger.info("Computing hit-rate and rank metrics...")
         # See how often we recommended a movie the user actually rated
-        self._top_n_metrics["HR"] = RecommenderMetrics.HitRate(
+        self._top_n_metrics["HR"] = RecommenderMetrics.hit_rate(
             top_n_preds, loo_validation_set
         )
         # See how often we recommended a movie the user actually liked
-        self._top_n_metrics["cHR"] = RecommenderMetrics.CumulativeHitRate(
+        self._top_n_metrics["cHR"] = RecommenderMetrics.cumulative_hit_rate(
             top_n_preds, loo_validation_set
         )
         # Compute ARHR
-        self._top_n_metrics["ARHR"] = RecommenderMetrics.AverageReciprocalHitRank(
+        self._top_n_metrics["ARHR"] = RecommenderMetrics.average_reciprocal_hit_rank(
             top_n_preds, loo_validation_set
         )
 
@@ -64,23 +64,23 @@ class AlgorithmEvaluator:
         self._logger.info("Computing recommendations with full data set...")
         self._algorithm.fit(evaluation_dataset.full_train_set)
         all_preds = self._algorithm.test(evaluation_dataset.full_anti_test_set)
-        top_n_preds = RecommenderMetrics.GetTopN(
+        top_n_preds = RecommenderMetrics.get_top_n(
             all_preds, n, minimum_rating
         )
         self._logger.info("Analyzing coverage, diversity, and novelty...")
         # self._logger.info user coverage with a minimum predicted rating of 4.0:
-        self._top_n_metrics["Coverage"] = RecommenderMetrics.UserCoverage(
+        self._top_n_metrics["Coverage"] = RecommenderMetrics.user_coverage(
             top_n_preds,
             evaluation_dataset.full_train_set.n_users,
-            ratingThreshold=4.0,
+            rating_threshold=4.0,
         )
         # Measure diversity of recommendations:
-        self._top_n_metrics["Diversity"] = RecommenderMetrics.Diversity(
+        self._top_n_metrics["Diversity"] = RecommenderMetrics.diversity(
             top_n_preds, evaluation_dataset.similarities
         )
 
         # Measure novelty (average popularity rank of recommendations):
-        self._top_n_metrics["Novelty"] = RecommenderMetrics.Novelty(
+        self._top_n_metrics["Novelty"] = RecommenderMetrics.novelty(
             top_n_preds, evaluation_dataset.popularity_rankings
         )
 

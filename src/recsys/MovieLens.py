@@ -92,7 +92,7 @@ class MovieLens:
             rank += 1
         return rankings
 
-    def getGenres(self):
+    def get_genres(self):
         genres = defaultdict(list)
         genre_ids = {}
         max_genre_id = 0
@@ -101,22 +101,22 @@ class MovieLens:
             next(movie_reader)  # skip header row
             for row in movie_reader:
                 movie_id = int(row[0])
-                genreList = row[2].split("|")
-                genreIDList = []
-                for genre in genreList:
+                genre_list = row[2].split("|")
+                genre_id_list = []
+                for genre in genre_list:
                     if genre in genre_ids:
-                        genreID = genre_ids[genre]
+                        genre_id = genre_ids[genre]
                     else:
-                        genreID = max_genre_id
-                        genre_ids[genre] = genreID
+                        genre_id = max_genre_id
+                        genre_ids[genre] = genre_id
                         max_genre_id += 1
-                    genreIDList.append(genreID)
-                genres[movie_id] = genreIDList
+                    genre_id_list.append(genre_id)
+                genres[movie_id] = genre_id_list
         # Convert integer-encoded genre lists to bitfields that we can treat as vectors
-        for movie_id, genreIDList in genres.items():
+        for movie_id, genre_id_list in genres.items():
             bitfield = [0] * max_genre_id
-            for genreID in genreIDList:
-                bitfield[genreID] = 1
+            for genre_id in genre_id_list:
+                bitfield[genre_id] = 1
             genres[movie_id] = bitfield
 
         return genres
