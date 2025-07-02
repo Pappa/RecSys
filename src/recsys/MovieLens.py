@@ -5,32 +5,35 @@ from pathlib import Path
 from surprise import Dataset
 from surprise import Reader
 from collections import defaultdict
-
+import logging
 
 class MovieLens:
-    movie_id_to_name_map: dict[int, str] = {}
-    name_to_movie_id_map: dict[str, int] = {}
+    _names_by_movie_id: dict[int, str] = {}
+    _movies_by_name: dict[str, int] = {}
 
     @classmethod
     def load(cls, *args, **kwargs):
-        lens = MovieLens()
-        print("Loading movie ratings...")
+        lens = MovieLens(*args, **kwargs)
         data = lens.load_movielens_data()
-        print("\nComputing movie popularity ranks so we can measure novelty later...")
         rankings = lens.get_popularity_ranks()
         return (lens, data, rankings)
 
-    def __init__(self) -> None:
+    def __init__(self, verbose=True) -> None:
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
+
+        self._logger.info("Initializing MovieLens.")
         self._path_base = os.path.dirname(os.path.realpath(__file__))
         self._ratings_path = Path(self._path_base + "/data/ratings.csv").resolve()
         self._movies_path = Path(self._path_base + "/data/movies.csv").resolve()
         self._visual_features_path = Path(
-            self._path_base + "/data/LLVisualFeatures13K_Log.csv"
+            self._path_base + "/data/visual_features.csv"
         ).resolve()
 
     def load_movielens_data(self):
-        self.movie_id_to_name_map = {}
-        self.name_to_movie_id_map = {}
+        self._logger.info("Loading MovieLens data.")
+        self._names_by_movie_id = defaultdict(int)
+        self._movies_by_name = defaultdict(str)
 
         reader = Reader(line_format="user item rating timestamp", sep=",", skip_lines=1)
 
@@ -42,8 +45,8 @@ class MovieLens:
             for row in movie_reader:
                 movie_id = int(row[0])
                 movie_name = row[1]
-                self.movie_id_to_name_map[movie_id] = movie_name
-                self.name_to_movie_id_map[movie_name] = movie_id
+                self._names_by_movie_id[movie_id] = movie_name
+                self._movies_by_name[movie_name] = movie_id
 
         return ratings_dataset
 
@@ -76,6 +79,7 @@ class MovieLens:
         return user_ratings
 
     def get_popularity_ranks(self):
+        self._logger.info("Computing movie popularity ranks to measure novelty later.")
         ratings = defaultdict(int)
         rankings = defaultdict(int)
         with open(self._ratings_path, newline="") as csvfile:
@@ -163,13 +167,7 @@ class MovieLens:
         return mes
 
     def get_movie_name(self, movie_id):
-        if movie_id in self.movie_id_to_name_map:
-            return self.movie_id_to_name_map[movie_id]
-        else:
-            return ""
+        return self._names_by_movie_id[movie_id]
 
     def get_movie_id(self, movie_name):
-        if movie_name in self.name_to_movie_id_map:
-            return self.name_to_movie_id_map[movie_name]
-        else:
-            return 0
+        return self._movies_by_name[movie_name]
