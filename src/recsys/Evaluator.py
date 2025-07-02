@@ -60,30 +60,6 @@ class Evaluator:
                     )
                 )
 
-        print("\nLegend:\n")
-        print("RMSE:      Root Mean Squared Error. Lower values mean better accuracy.")
-        print("MAE:       Mean Absolute Error. Lower values mean better accuracy.")
-        if top_n_metrics:
-            print(
-                "HR:        Hit Rate; how often we are able to recommend a left-out rating. Higher is better."
-            )
-            print(
-                "cHR:       Cumulative Hit Rate; hit rate, confined to ratings above a certain threshold. Higher is better."
-            )
-            print(
-                "ARHR:      Average Reciprocal Hit Rank - Hit rate that takes the ranking into account. Higher is better."
-            )
-            print(
-                "Coverage:  Ratio of users for whom recommendations above a certain threshold exist. Higher is better."
-            )
-            print(
-                "Diversity: 1-S, where S is the average similarity score between every possible pair of recommendations"
-            )
-            print("           for a given user. Higher means more diverse.")
-            print(
-                "Novelty:   Average popularity rank of recommended items. Higher means more novel."
-            )
-
     def sample_top_n_recs(self, ml, test_subject=85, k=10):
         for algo in self.algorithms:
             print("\nUsing recommender ", algo.name)
