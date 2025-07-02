@@ -7,19 +7,10 @@ name = "recsys"
 version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "surprise",
-    "numpy<2",
-    "pandas",
-    "tensorflow",
-]
+dependencies = ["surprise", "numpy<2", "pandas", "tensorflow"]
 
-[project.optional-dependencies]
-testing = [
-    "pytest",
-    "pytest-cov",
-    "pytest-mock",
-]
+[dependency-groups]
+dev = ["pytest", "pytest-cov", "pytest-mock", "ipykernel"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
