@@ -20,10 +20,10 @@ class EvaluationDataset:
         # And build an anti-test-set for building predictions
         LOOCV = LeaveOneOut(n_splits=1, random_state=1)
         for train, test in LOOCV.split(data):
-            self._LOOCV_train = train
-            self._LOOCV_test = test
+            self._loo_train = train
+            self._loo_test = test
 
-        self._LOOCV_anti_test_set = self._LOOCV_train.build_anti_testset()
+        self._loo_anti_test_set = self._loo_train.build_anti_testset()
 
         # Compute similarty matrix between items so we can measure diversity
         sim_options = {"name": "cosine", "user_based": False}
@@ -60,16 +60,16 @@ class EvaluationDataset:
         return self._test_set
 
     @property
-    def LOOCV_train_set(self):
-        return self._LOOCV_train
+    def loo_train_set(self):
+        return self._loo_train
 
     @property
-    def LOOCV_test_set(self):
-        return self._LOOCV_test
+    def loo_test_set(self):
+        return self._loo_test
 
     @property
-    def LOOCV_anti_test_set(self):
-        return self._LOOCV_anti_test_set
+    def loo_anti_test_set(self):
+        return self._loo_anti_test_set
 
     @property
     def similarities(self):
