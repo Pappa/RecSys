@@ -9,9 +9,10 @@ class AlgorithmEvaluator:
         self._accuracy_metrics = {}
         self._top_n_metrics = {}
 
-        self._logger = logging.getLogger(f"{self.__class__.__name__}({name})")
+        self._logger = logging.getLogger(
+            f"{self.__class__.__name__}({algorithm.__class__.__name__}, {name})"
+        )
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
-
 
     def evaluate(
         self, evaluation_dataset, top_n_metrics=False, minimum_rating=0.4, n=10
@@ -24,7 +25,7 @@ class AlgorithmEvaluator:
         self._logger.info("Analysis complete.")
 
         return {**self._accuracy_metrics, **self._top_n_metrics}
-    
+
     def _evaluate_accuracy(self, evaluation_dataset):
         self._logger.info("Evaluating accuracy.")
         self._algorithm.fit(evaluation_dataset.train_set)
@@ -38,13 +39,9 @@ class AlgorithmEvaluator:
         self._algorithm.fit(evaluation_dataset.loo_train_set)
         loo_validation_set = self._algorithm.test(evaluation_dataset.loo_test_set)
         # Build predictions for all ratings not in the training set
-        all_preds = self._algorithm.test(
-            evaluation_dataset.loo_anti_test_set
-        )
+        all_preds = self._algorithm.test(evaluation_dataset.loo_anti_test_set)
         # Compute top 10 recs for each user
-        top_n_preds = RecommenderMetrics.get_top_n(
-            all_preds, n, minimum_rating
-        )
+        top_n_preds = RecommenderMetrics.get_top_n(all_preds, n, minimum_rating)
         self._logger.info("Computing hit-rate and rank metrics.")
         # See how often we recommended a movie the user actually rated
         self._top_n_metrics["HR"] = RecommenderMetrics.hit_rate(
@@ -63,9 +60,7 @@ class AlgorithmEvaluator:
         self._logger.info("Computing recommendations with full data set.")
         self._algorithm.fit(evaluation_dataset.full_train_set)
         all_preds = self._algorithm.test(evaluation_dataset.full_anti_test_set)
-        top_n_preds = RecommenderMetrics.get_top_n(
-            all_preds, n, minimum_rating
-        )
+        top_n_preds = RecommenderMetrics.get_top_n(all_preds, n, minimum_rating)
         self._logger.info("Analyzing coverage, diversity, and novelty.")
         # self._logger.info user coverage with a minimum predicted rating of 4.0:
         self._top_n_metrics["Coverage"] = RecommenderMetrics.user_coverage(
