@@ -4,13 +4,15 @@ from recsys.MovieLens import MovieLens
 import math
 import numpy as np
 import heapq
+import logging
 
 
 class ContentKNN(AlgoBase):
     def __init__(self, k=40, sim_options={}, verbose=False):
         AlgoBase.__init__(self)
         self.k = k
-        self.verbose = verbose
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
     def fit(self, trainset):
         AlgoBase.fit(self, trainset)
@@ -23,14 +25,14 @@ class ContentKNN(AlgoBase):
         years = ml.get_years()
         mes = ml.get_mis_en_scene()
 
-        print("Computing content-based similarity matrix...")
+        self._logger.info("Generate content-based similarity matrix")
 
         # Compute genre distance for every movie combination as a 2x2 matrix
         self.similarities = np.zeros((self.trainset.n_items, self.trainset.n_items))
 
         for rating in range(self.trainset.n_items):
-            if self.verbose and (rating % 500 == 0):
-                print(rating, " of ", self.trainset.n_items)
+            if rating % 500 == 0:
+                self._logger.info(f"{rating} of {self.trainset.n_items}")
             for other_rating in range(rating + 1, self.trainset.n_items):
                 movie_id = int(self.trainset.to_raw_iid(rating))
                 other_movie_id = int(self.trainset.to_raw_iid(other_rating))
@@ -49,9 +51,6 @@ class ContentKNN(AlgoBase):
                 self.similarities[other_rating, rating] = self.similarities[
                     rating, other_rating
                 ]
-
-        if self.verbose:
-            print("...done.")
 
         return self
 

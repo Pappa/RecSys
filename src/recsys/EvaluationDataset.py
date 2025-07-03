@@ -1,10 +1,15 @@
 from surprise.model_selection import train_test_split
 from surprise.model_selection import LeaveOneOut
 from surprise import KNNBaseline
+import logging
 
 
 class EvaluationDataset:
-    def __init__(self, data, popularity_rankings):
+    def __init__(self, data, popularity_rankings, verbose=False):
+        self._verbose = verbose
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
+
         self._rankings = popularity_rankings
 
         # Build a full training set for evaluating overall properties
@@ -27,7 +32,7 @@ class EvaluationDataset:
 
         # Compute similarty matrix between items so we can measure diversity
         sim_options = {"name": "cosine", "user_based": False}
-        self._sims_algo = KNNBaseline(sim_options=sim_options)
+        self._sims_algo = KNNBaseline(sim_options=sim_options, verbose=self._verbose)
         self._sims_algo.fit(self._full_train_set)
 
     @property

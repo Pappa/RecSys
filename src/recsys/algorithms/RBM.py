@@ -4,9 +4,10 @@ from recsys.MovieLens import MovieLens
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework import ops
+import logging
 
 
-class Recommender(object):
+class Recommender:
     def __init__(
         self,
         visible_dimensions,
@@ -15,6 +16,7 @@ class Recommender(object):
         rating_values=10,
         learning_rate=0.001,
         batch_size=100,
+        verbose=False,
     ):
         self.visible_dimensions = visible_dimensions
         self.epochs = epochs
@@ -22,6 +24,8 @@ class Recommender(object):
         self.rating_values = rating_values
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
     def train(self, X):
         ops.reset_default_graph()
@@ -41,7 +45,7 @@ class Recommender(object):
                     self.update, feed_dict={self.X: trX[i : i + self.batch_size]}
                 )
 
-            print("Trained epoch ", epoch)
+            self._logger.info(f"Trained epoch: {epoch}")
 
     def get_recommendations(self, input_user):
         hidden = tf.nn.sigmoid(tf.matmul(self.X, self.weights) + self.hidden_bias)
@@ -117,7 +121,9 @@ class Recommender(object):
 
         # Now define what each epoch will do...
         # Run the forward and backward passes, and update the weights
-        weight_update = self.weights.assign_add(self.learning_rate * (forward - backward))
+        weight_update = self.weights.assign_add(
+            self.learning_rate * (forward - backward)
+        )
         # Update hidden bias, minimizing the divergence in the hidden nodes
         hidden_bias_update = self.hidden_bias.assign_add(
             self.learning_rate * tf.reduce_mean(h_prob0 - h_prob1, 0)
@@ -138,6 +144,7 @@ class RBM(AlgoBase):
         learning_rate=0.001,
         batch_size=100,
         sim_options={},
+        verbose=False,
     ):
         AlgoBase.__init__(self)
         self.epochs = epochs
@@ -147,6 +154,8 @@ class RBM(AlgoBase):
         self.ml = MovieLens()
         self.ml.load_movielens_data()
         self.stoplist = ["sex", "drugs", "rock n roll"]
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
     def build_stop_list(self, trainset):
         self.stop_list_lookup = {}
@@ -158,7 +167,7 @@ class RBM(AlgoBase):
                 title = title.lower()
                 for term in self.stoplist:
                     if term in title:
-                        print("Blocked ", title)
+                        self._logger.info(f"Blocked: {title}")
                         self.stop_list_lookup[iiid] = True
 
     def softmax(self, x):
@@ -195,7 +204,7 @@ class RBM(AlgoBase):
         self.predicted_ratings = np.zeros([n_users, n_items], dtype=np.float32)
         for uiid in range(trainset.n_users):
             if uiid % 50 == 0:
-                print("Processing user ", uiid)
+                self._logger.info(f"Processing user: {uiid}")
             recs = rbm.get_recommendations([training_matrix[uiid]])
             recs = np.reshape(recs, [n_items, 10])
 

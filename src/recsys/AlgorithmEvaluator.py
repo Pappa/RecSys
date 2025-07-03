@@ -3,7 +3,7 @@ import logging
 
 
 class AlgorithmEvaluator:
-    def __init__(self, algorithm, name, verbose=True):
+    def __init__(self, algorithm, name, verbose=False):
         self._algorithm = algorithm
         self._name = name
         self._accuracy_metrics = {}
@@ -17,66 +17,86 @@ class AlgorithmEvaluator:
     def evaluate(
         self, evaluation_dataset, top_n_metrics=False, minimum_rating=0.4, n=10
     ):
-        self._evaluate_accuracy(evaluation_dataset)
+        self._logger.info(
+            f"Evaluating: {self.__class__.__name__}({self._algorithm.__class__.__name__}, {self._name})"
+        )
+        accuracy_results = self._evaluate_accuracy(evaluation_dataset)
+        top_n_results = []
 
         if top_n_metrics:
-            self._evaluate_top_n_metrics(evaluation_dataset, n, minimum_rating)
+            top_n_results = self._evaluate_top_n_metrics(
+                evaluation_dataset, n, minimum_rating
+            )
 
-        self._logger.info("Analysis complete.")
+        self._logger.info("Evaluation complete")
 
-        return {**self._accuracy_metrics, **self._top_n_metrics}
+        return accuracy_results + top_n_results
 
     def _evaluate_accuracy(self, evaluation_dataset):
-        self._logger.info("Evaluating accuracy.")
+        self._logger.info("Evaluating accuracy")
         self._algorithm.fit(evaluation_dataset.train_set)
         predictions = self._algorithm.test(evaluation_dataset.test_set)
-        self._accuracy_metrics["RMSE"] = RecommenderMetrics.rmse(predictions)
-        self._accuracy_metrics["MAE"] = RecommenderMetrics.mae(predictions)
+        rmse = RecommenderMetrics.rmse(predictions)
+        mae = RecommenderMetrics.mae(predictions)
+        return [
+            ("RMSE", rmse),
+            ("MAE", mae),
+        ]
 
     def _evaluate_top_n_metrics(self, evaluation_dataset, n, minimum_rating):
-        # Evaluate top-10 with Leave One Out validation
-        self._logger.info("Evaluating top-N with leave-one-out validation.")
+        self._logger.info("Evaluating top-N metrics with Leave One Out validation")
+
         self._algorithm.fit(evaluation_dataset.loo_train_set)
         loo_validation_set = self._algorithm.test(evaluation_dataset.loo_test_set)
-        # Build predictions for all ratings not in the training set
-        all_preds = self._algorithm.test(evaluation_dataset.loo_anti_test_set)
-        # Compute top 10 recs for each user
-        top_n_preds = RecommenderMetrics.get_top_n(all_preds, n, minimum_rating)
-        self._logger.info("Computing hit-rate and rank metrics.")
-        # See how often we recommended a movie the user actually rated
-        self._top_n_metrics["HR"] = RecommenderMetrics.hit_rate(
-            top_n_preds, loo_validation_set
+        anti_test_predictions = self._algorithm.test(
+            evaluation_dataset.loo_anti_test_set
         )
-        # See how often we recommended a movie the user actually liked
-        self._top_n_metrics["cHR"] = RecommenderMetrics.cumulative_hit_rate(
-            top_n_preds, loo_validation_set
-        )
-        # Compute ARHR
-        self._top_n_metrics["ARHR"] = RecommenderMetrics.average_reciprocal_hit_rank(
-            top_n_preds, loo_validation_set
+        top_n_predictions = RecommenderMetrics.get_top_n(
+            anti_test_predictions, n, minimum_rating
         )
 
-        # Evaluate properties of recommendations on full training set
-        self._logger.info("Computing recommendations with full data set.")
+        top_n_results = []
+
+        hit_rate = RecommenderMetrics.hit_rate(top_n_predictions, loo_validation_set)
+        top_n_results.append(("HR", hit_rate))
+
+        cumulative_hit_rate = RecommenderMetrics.cumulative_hit_rate(
+            top_n_predictions, loo_validation_set
+        )
+        top_n_results.append(("cHR", cumulative_hit_rate))
+
+        arhr = RecommenderMetrics.average_reciprocal_hit_rank(
+            top_n_predictions, loo_validation_set
+        )
+        top_n_results.append(("ARHR", arhr))
+
+        self._logger.info("Evaluating top-N metrics with full dataset")
         self._algorithm.fit(evaluation_dataset.full_train_set)
-        all_preds = self._algorithm.test(evaluation_dataset.full_anti_test_set)
-        top_n_preds = RecommenderMetrics.get_top_n(all_preds, n, minimum_rating)
-        self._logger.info("Analyzing coverage, diversity, and novelty.")
-        # self._logger.info user coverage with a minimum predicted rating of 4.0:
-        self._top_n_metrics["Coverage"] = RecommenderMetrics.user_coverage(
-            top_n_preds,
-            evaluation_dataset.full_train_set.n_users,
-            rating_threshold=4.0,
+        anti_test_predictions = self._algorithm.test(
+            evaluation_dataset.full_anti_test_set
         )
-        # Measure diversity of recommendations:
-        self._top_n_metrics["Diversity"] = RecommenderMetrics.diversity(
-            top_n_preds, evaluation_dataset.similarities
+        top_n_predictions = RecommenderMetrics.get_top_n(
+            anti_test_predictions, n, minimum_rating
         )
 
-        # Measure novelty (average popularity rank of recommendations):
-        self._top_n_metrics["Novelty"] = RecommenderMetrics.novelty(
-            top_n_preds, evaluation_dataset.popularity_rankings
+        coverage = RecommenderMetrics.user_coverage(
+            top_n_predictions,
+            evaluation_dataset.full_train_set.n_users,
+            minimum_rating=minimum_rating,
         )
+        top_n_results.append(("Coverage", coverage))
+
+        diversity = RecommenderMetrics.diversity(
+            top_n_predictions, evaluation_dataset.similarities
+        )
+        top_n_results.append(("Diversity", diversity))
+
+        novelty = RecommenderMetrics.novelty(
+            top_n_predictions, evaluation_dataset.popularity_rankings
+        )
+        top_n_results.append(("Novelty", novelty))
+
+        return top_n_results
 
     @property
     def name(self):

@@ -80,7 +80,7 @@ class MovieLens:
         return user_ratings
 
     def get_popularity_ranks(self):
-        self._logger.info("Computing movie popularity ranks to measure novelty later.")
+        self._logger.info("Generate movie popularity ranks to measure novelty later.")
         ratings = defaultdict(int)
         rankings = defaultdict(int)
         with open(self._ratings_path, newline="") as csvfile:
@@ -147,7 +147,7 @@ class MovieLens:
             mes_reader = csv.reader(csvfile)
             next(mes_reader)  # skip header row
             for row in mes_reader:
-                print(f"mes row: {type(row)}")
+                self._logger.info(f"mes row: {type(row)}")
                 movie_id = int(row[0])
                 avg_shot_length = float(row[1])
                 mean_color_variance = float(row[2])

@@ -1,20 +1,25 @@
 import itertools
-
 from surprise import accuracy, Prediction
 from collections import defaultdict
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class RecommenderMetrics:
     @staticmethod
     def mae(predictions: list[Prediction], verbose=False):
+        _logger.info("Calculating MAE")
         return accuracy.mae(predictions, verbose=verbose)
 
     @staticmethod
     def rmse(predictions: list[Prediction], verbose=False):
+        _logger.info("Calculating RMSE")
         return accuracy.rmse(predictions, verbose=verbose)
 
     @staticmethod
     def get_top_n(predictions: list[Prediction], n=10, minimum_rating=4.0):
+        _logger.info("Get top-N predictions")
         top_n = defaultdict(list)
 
         for user_id, movie_id, true_rating, predicted_rating, _ in predictions:
@@ -29,6 +34,7 @@ class RecommenderMetrics:
 
     @staticmethod
     def hit_rate(top_n_preds, loo_validation_set):
+        _logger.info("Calculating hit-rate")
         hits = 0
         total = 0
 
@@ -51,7 +57,8 @@ class RecommenderMetrics:
         return hits / total
 
     @staticmethod
-    def cumulative_hit_rate(top_n_preds, loo_validation_set, rating_cutoff=1e-5):
+    def cumulative_hit_rate(top_n_preds, loo_validation_set, minimum_rating=1e-5):
+        _logger.info("Calculating cumulative hit-rate")
         hits = 0
         total = 0
 
@@ -63,8 +70,8 @@ class RecommenderMetrics:
             predicted_rating,
             _,
         ) in loo_validation_set:
-            # Only consider ratings that are greater than or equal to the cutoff
-            if true_rating >= rating_cutoff:
+            # Only consider ratings that are greater than or equal to the minimum rating
+            if true_rating >= minimum_rating:
                 # Is it in the predicted top 10 for this user?
                 hit = False
                 for movie_id, predicted_rating in top_n_preds[int(user_id)]:
@@ -81,6 +88,7 @@ class RecommenderMetrics:
 
     @staticmethod
     def rating_hit_rate(top_n_preds, loo_validation_set):
+        _logger.info("Calculating rating hit-rate")
         hits = defaultdict(float)
         total = defaultdict(float)
 
@@ -103,12 +111,14 @@ class RecommenderMetrics:
 
             total[true_rating] += 1
 
-        # Compute overall precision
-        for rating in sorted(hits.keys()):
-            print(rating, hits[rating] / total[rating])
+        rating_hit_rate = [
+            (rating, hits[rating] / total[rating]) for rating in sorted(hits.keys())
+        ]
+        return rating_hit_rate
 
     @staticmethod
     def average_reciprocal_hit_rank(top_n_preds, loo_validation_set):
+        _logger.info("Calculating average reciprocal hit rank")
         summation = 0
         total = 0
         # For each left-out rating
@@ -136,12 +146,15 @@ class RecommenderMetrics:
 
     # What percentage of users have at least one "good" recommendation
     @staticmethod
-    def user_coverage(top_n_preds, n_users, rating_threshold=0):
+    def user_coverage(top_n_preds, n_users, minimum_rating=0):
+        _logger.info(
+            f"Calculating user coverage with a minimum predicted rating of {minimum_rating}"
+        )
         hits = 0
         for user_id in top_n_preds.keys():
             hit = False
             for movie_id, predicted_rating in top_n_preds[user_id]:
-                if predicted_rating >= rating_threshold:
+                if predicted_rating >= minimum_rating:
                     hit = True
                     break
             if hit:
@@ -151,6 +164,7 @@ class RecommenderMetrics:
 
     @staticmethod
     def diversity(top_n_preds, similarities_model):
+        _logger.info("Calculating diversity")
         n = 0
         total = 0
         similarity_matrix = similarities_model.compute_similarities()
@@ -173,6 +187,7 @@ class RecommenderMetrics:
 
     @staticmethod
     def novelty(top_n_preds, rankings):
+        _logger.info("Calculating novelty")
         n = 0
         total = 0
         for user_id in top_n_preds.keys():
