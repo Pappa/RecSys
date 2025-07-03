@@ -4,13 +4,14 @@ import logging
 
 
 class Evaluator:
-    algorithms: list[AlgorithmEvaluator] = []
+    algorithms: list[AlgorithmEvaluator]
 
     def __init__(self, dataset, rankings, verbose=False) -> None:
         self._verbose = verbose
         self._logger = logging.getLogger(self.__class__.__name__)
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
         self.dataset = EvaluationDataset(dataset, rankings, verbose=verbose)
+        self.algorithms = []
 
     def add_algorithm(self, algorithm, name):
         alg = AlgorithmEvaluator(algorithm, name, verbose=self._verbose)
@@ -18,6 +19,7 @@ class Evaluator:
 
     def evaluate(self, top_n_metrics=False, minimum_rating=0.0):
         results = []
+        metrics = []
         for algorithm in self.algorithms:
             self._logger.info(f"Evaluating: {algorithm.name}")
             algorithm_results = algorithm.evaluate(
@@ -25,16 +27,11 @@ class Evaluator:
                 top_n_metrics=top_n_metrics,
                 minimum_rating=minimum_rating,
             )
-            results.append(
-                (
-                    algorithm.name,
-                    [result[0] for result in algorithm_results],
-                    [result[1] for result in algorithm_results],
-                )
-            )
-        columns = ["Algorithm"] + results[1][1]
-        values = [[result[0]] + result[2] for result in results]
-        return columns, values
+            metrics.append([result[0] for result in algorithm_results])
+            results.append([result[1] for result in algorithm_results])
+
+        names = [a.name for a in self.algorithms]
+        return names, metrics[0], results
 
     def sample_top_n_recs(self, ml, test_subject=85, n=10):
         for algo in self.algorithms:
