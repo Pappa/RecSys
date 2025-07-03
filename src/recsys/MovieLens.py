@@ -7,6 +7,7 @@ from surprise import Reader
 from collections import defaultdict
 import logging
 
+
 class MovieLens:
     _names_by_movie_id: dict[int, str] = {}
     _movies_by_name: dict[str, int] = {}
@@ -18,11 +19,11 @@ class MovieLens:
         rankings = lens.get_popularity_ranks()
         return (lens, data, rankings)
 
-    def __init__(self, verbose=True) -> None:
+    def __init__(self, verbose=False) -> None:
         self._logger = logging.getLogger(self.__class__.__name__)
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
-        self._logger.info("Initializing MovieLens.")
+        self._logger.info("Initializing MovieLens")
         self._path_base = os.path.dirname(os.path.realpath(__file__))
         self._ratings_path = Path(self._path_base + "/data/ratings.csv").resolve()
         self._movies_path = Path(self._path_base + "/data/movies.csv").resolve()
@@ -31,7 +32,7 @@ class MovieLens:
         ).resolve()
 
     def load_movielens_data(self):
-        self._logger.info("Loading MovieLens data.")
+        self._logger.info("Loading MovieLens data")
         self._names_by_movie_id = defaultdict(int)
         self._movies_by_name = defaultdict(str)
 

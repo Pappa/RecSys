@@ -1,17 +1,20 @@
 import itertools
 
-from surprise import accuracy
+from surprise import accuracy, Prediction
 from collections import defaultdict
 
 
 class RecommenderMetrics:
-    def mae(predictions):
-        return accuracy.mae(predictions, verbose=False)
+    @staticmethod
+    def mae(predictions: list[Prediction], verbose=False):
+        return accuracy.mae(predictions, verbose=verbose)
 
-    def rmse(predictions):
-        return accuracy.rmse(predictions, verbose=False)
+    @staticmethod
+    def rmse(predictions: list[Prediction], verbose=False):
+        return accuracy.rmse(predictions, verbose=verbose)
 
-    def get_top_n(predictions, n=10, minimum_rating=4.0):
+    @staticmethod
+    def get_top_n(predictions: list[Prediction], n=10, minimum_rating=4.0):
         top_n = defaultdict(list)
 
         for user_id, movie_id, true_rating, predicted_rating, _ in predictions:
@@ -24,6 +27,7 @@ class RecommenderMetrics:
 
         return top_n
 
+    @staticmethod
     def hit_rate(top_n_preds, loo_validation_set):
         hits = 0
         total = 0
@@ -46,7 +50,8 @@ class RecommenderMetrics:
         # Compute overall precision
         return hits / total
 
-    def cumulative_hit_rate(top_n_preds, loo_validation_set, rating_cutoff=0):
+    @staticmethod
+    def cumulative_hit_rate(top_n_preds, loo_validation_set, rating_cutoff=1e-5):
         hits = 0
         total = 0
 
@@ -58,7 +63,7 @@ class RecommenderMetrics:
             predicted_rating,
             _,
         ) in loo_validation_set:
-            # Only look at ability to recommend things the users actually liked...
+            # Only consider ratings that are greater than or equal to the cutoff
             if true_rating >= rating_cutoff:
                 # Is it in the predicted top 10 for this user?
                 hit = False
@@ -74,6 +79,7 @@ class RecommenderMetrics:
         # Compute overall precision
         return hits / total
 
+    @staticmethod
     def rating_hit_rate(top_n_preds, loo_validation_set):
         hits = defaultdict(float)
         total = defaultdict(float)
@@ -101,6 +107,7 @@ class RecommenderMetrics:
         for rating in sorted(hits.keys()):
             print(rating, hits[rating] / total[rating])
 
+    @staticmethod
     def average_reciprocal_hit_rank(top_n_preds, loo_validation_set):
         summation = 0
         total = 0
@@ -128,6 +135,7 @@ class RecommenderMetrics:
         return summation / total
 
     # What percentage of users have at least one "good" recommendation
+    @staticmethod
     def user_coverage(top_n_preds, n_users, rating_threshold=0):
         hits = 0
         for user_id in top_n_preds.keys():
@@ -141,6 +149,7 @@ class RecommenderMetrics:
 
         return hits / n_users
 
+    @staticmethod
     def diversity(top_n_preds, similarities_model):
         n = 0
         total = 0
@@ -162,6 +171,7 @@ class RecommenderMetrics:
         else:
             return 0
 
+    @staticmethod
     def novelty(top_n_preds, rankings):
         n = 0
         total = 0
