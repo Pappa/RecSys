@@ -33,18 +33,18 @@ class Evaluator:
         names = [a.name for a in self.algorithms]
         return names, metrics[0], results
 
-    def sample_top_n_recs(self, ml, test_subject=85, n=10):
+    def sample_top_n_recs(self, lens, test_uid=85, n=10):
         for algo in self.algorithms:
             self._logger.info(f"Using recommender: {algo.name}")
 
             self._logger.info("Training model")
-            train_set = self.dataset.full_train_set
-            algo.algorithm.fit(train_set)
+            trainset = self.dataset.full_trainset
+            algo.algorithm.fit(trainset)
 
             self._logger.info("Generate recommendations")
-            test_set = self.dataset.get_anti_test_set_for_user(test_subject)
+            testset = self.dataset.get_anti_testset_for_user(test_uid)
 
-            predictions = algo.algorithm.test(test_set)
+            predictions = algo.algorithm.test(testset)
 
             recommendations = []
 
@@ -55,7 +55,7 @@ class Evaluator:
             recommendations.sort(key=lambda x: x[1], reverse=True)
 
             samples = [
-                (ml.get_movie_name(ratings[0]), ratings[1])
+                (lens.get_movie_name(ratings[0]), ratings[1])
                 for ratings in recommendations[:n]
             ]
             return samples

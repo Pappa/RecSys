@@ -33,13 +33,13 @@ class RecommenderMetrics:
         return top_n
 
     @staticmethod
-    def hit_rate(top_n_preds, loo_validation_set):
+    def hit_rate(top_n_preds, loo_testset):
         _logger.info("Calculating hit-rate")
         hits = 0
         total = 0
 
         # For each left-out rating
-        for held_out_rating in loo_validation_set:
+        for held_out_rating in loo_testset:
             user_id = held_out_rating[0]
             held_out_movie_id = held_out_rating[1]
             # Is it in the predicted top 10 for this user?
@@ -57,7 +57,7 @@ class RecommenderMetrics:
         return hits / total
 
     @staticmethod
-    def cumulative_hit_rate(top_n_preds, loo_validation_set, minimum_rating=1e-5):
+    def cumulative_hit_rate(top_n_preds, loo_testset, minimum_rating=1e-5):
         _logger.info("Calculating cumulative hit-rate")
         hits = 0
         total = 0
@@ -69,7 +69,7 @@ class RecommenderMetrics:
             true_rating,
             predicted_rating,
             _,
-        ) in loo_validation_set:
+        ) in loo_testset:
             # Only consider ratings that are greater than or equal to the minimum rating
             if true_rating >= minimum_rating:
                 # Is it in the predicted top 10 for this user?
@@ -87,7 +87,7 @@ class RecommenderMetrics:
         return hits / total
 
     @staticmethod
-    def rating_hit_rate(top_n_preds, loo_validation_set):
+    def rating_hit_rate(top_n_preds, loo_testset):
         _logger.info("Calculating rating hit-rate")
         hits = defaultdict(float)
         total = defaultdict(float)
@@ -99,7 +99,7 @@ class RecommenderMetrics:
             true_rating,
             predicted_rating,
             _,
-        ) in loo_validation_set:
+        ) in loo_testset:
             # Is it in the predicted top N for this user?
             hit = False
             for movie_id, predicted_rating in top_n_preds[int(user_id)]:
@@ -117,7 +117,7 @@ class RecommenderMetrics:
         return rating_hit_rate
 
     @staticmethod
-    def average_reciprocal_hit_rank(top_n_preds, loo_validation_set):
+    def average_reciprocal_hit_rank(top_n_preds, loo_testset):
         _logger.info("Calculating average reciprocal hit rank")
         summation = 0
         total = 0
@@ -128,7 +128,7 @@ class RecommenderMetrics:
             true_rating,
             predicted_rating,
             _,
-        ) in loo_validation_set:
+        ) in loo_testset:
             # Is it in the predicted top N for this user?
             hit_rank = 0
             rank = 0

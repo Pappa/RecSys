@@ -13,11 +13,11 @@ class EvaluationDataset:
         self._rankings = popularity_rankings
 
         # Build a full training set for evaluating overall properties
-        self._full_train_set = data.build_full_trainset()
-        self._full_anti_test_set = self._full_train_set.build_anti_testset()
+        self._full_trainset = data.build_full_trainset()
+        self._full_anti_testset = self._full_trainset.build_anti_testset()
 
         # Build a 75/25 train/test split for measuring accuracy
-        self._train_set, self._test_set = train_test_split(
+        self._trainset, self._testset = train_test_split(
             data, test_size=0.25, random_state=1
         )
 
@@ -28,26 +28,26 @@ class EvaluationDataset:
             self._loo_train = train
             self._loo_test = test
 
-        self._loo_anti_test_set = self._loo_train.build_anti_testset()
+        self._loo_anti_testset = self._loo_train.build_anti_testset()
 
         # Compute similarty matrix between items so we can measure diversity
         sim_options = {"name": "cosine", "user_based": False}
         self._sims_algo = KNNBaseline(sim_options=sim_options, verbose=self._verbose)
-        self._sims_algo.fit(self._full_train_set)
+        self._sims_algo.fit(self._full_trainset)
 
     @property
-    def full_train_set(self):
-        return self._full_train_set
+    def full_trainset(self):
+        return self._full_trainset
 
     @property
-    def full_anti_test_set(self):
-        return self._full_anti_test_set
+    def full_anti_testset(self):
+        return self._full_anti_testset
 
-    def get_anti_test_set_for_user(self, test_subject):
-        trainset = self._full_train_set
+    def get_anti_testset_for_user(self, test_uid):
+        trainset = self._full_trainset
         fill = trainset.global_mean
         anti_testset = []
-        u = trainset.to_inner_uid(str(test_subject))
+        u = trainset.to_inner_uid(str(test_uid))
         user_items = set([j for (j, _) in trainset.ur[u]])
         anti_testset += [
             (trainset.to_raw_uid(u), trainset.to_raw_iid(i), fill)
@@ -57,24 +57,24 @@ class EvaluationDataset:
         return anti_testset
 
     @property
-    def train_set(self):
-        return self._train_set
+    def trainset(self):
+        return self._trainset
 
     @property
-    def test_set(self):
-        return self._test_set
+    def testset(self):
+        return self._testset
 
     @property
-    def loo_train_set(self):
+    def loo_trainset(self):
         return self._loo_train
 
     @property
-    def loo_test_set(self):
+    def loo_testset(self):
         return self._loo_test
 
     @property
-    def loo_anti_test_set(self):
-        return self._loo_anti_test_set
+    def loo_anti_testset(self):
+        return self._loo_anti_testset
 
     @property
     def similarities(self):
