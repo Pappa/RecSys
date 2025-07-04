@@ -66,7 +66,11 @@ class AlgorithmEvaluator:
             top_n_predictions, loo_predictions
         )
 
-        return [("HR", hit_rate), ("cHR", cumulative_hit_rate), ("ARHR", arhr)]
+        return [
+            ("HR", hit_rate),
+            ("cHR", cumulative_hit_rate),
+            ("ARHR", arhr),
+        ]
 
     def _evaluate_top_n_metrics_full(self, evaluation_dataset, n, minimum_rating):
         self._logger.info("Evaluating top-N metrics with full dataset")
@@ -92,7 +96,11 @@ class AlgorithmEvaluator:
             top_n_predictions, evaluation_dataset.popularity_rankings
         )
 
-        return [("Coverage", coverage), ("Diversity", diversity), ("Novelty", novelty)]
+        return [
+            ("Coverage", coverage),
+            ("Diversity", diversity),
+            ("Novelty", novelty),
+        ]
 
     @property
     def name(self):
