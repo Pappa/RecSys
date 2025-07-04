@@ -1,11 +1,11 @@
 from surprise.model_selection import train_test_split
 from surprise.model_selection import LeaveOneOut
-from surprise import KNNBaseline
+from surprise import KNNBaseline, Dataset
 import logging
 
 
 class EvaluationDataset:
-    def __init__(self, data, popularity_rankings, verbose=False):
+    def __init__(self, data: Dataset, popularity_rankings, verbose=False):
         self._verbose = verbose
         self._logger = logging.getLogger(self.__class__.__name__)
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
