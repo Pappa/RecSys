@@ -6,8 +6,6 @@ class AlgorithmEvaluator:
     def __init__(self, algorithm, name, verbose=False):
         self._algorithm = algorithm
         self._name = name
-        self._accuracy_metrics = {}
-        self._top_n_metrics = {}
 
         self._logger = logging.getLogger(
             f"{self.__class__.__name__}({algorithm.__class__.__name__}, {name})"
