@@ -1,10 +1,11 @@
 import itertools
-from functools import reduce
 from surprise import accuracy, Prediction
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import logging
 
 _logger = logging.getLogger(__name__)
+
+HitRateMetrics = namedtuple('HitRateMetrics', ['HR', 'cHR', 'ARHR', 'rHR'])
 
 
 class RecommenderMetrics:
@@ -23,30 +24,12 @@ class RecommenderMetrics:
         _logger.info("Get top-N predictions")
         top_n = defaultdict(list)
 
-        for uid, iid, true_rating, predicted_rating, _ in predictions:
-            if predicted_rating >= minimum_rating:
-                top_n[int(uid)].append((iid, predicted_rating))
-
-        for uid, ratings in top_n.items():
-            ratings.sort(key=lambda x: x[1], reverse=True)
-            top_n[uid] = ratings[:n]
-
-        return top_n
-    @staticmethod
-    def get_top_n2(predictions: list[Prediction], n=10, minimum_rating=4.0):
-        _logger.info("Get top-N predictions")
-        top_n = defaultdict(list)
-
-        sorted_predictions = sorted(predictions, key=lambda x: x[3], reverse=True)
+        sorted_predictions = sorted(predictions, key=lambda x: (x.uid, x.est), reverse=True)
 
         for prediction in sorted_predictions:
             uid, iid, true_rating, estimated_rating, _ = prediction
-            # if len(top_n[uid]) < n and estimated_rating >= minimum_rating:
-            if estimated_rating >= minimum_rating:
-                top_n[uid].append(prediction)
-                
-        for uid, top_n_predictions in top_n.items():
-            top_n[uid] = top_n_predictions[:n]
+            if estimated_rating >= minimum_rating and len(top_n[int(uid)]) < n:
+                top_n[int(uid)].append(prediction)
 
         return top_n
 
@@ -71,9 +54,9 @@ class RecommenderMetrics:
             total_by_rating[held_out_true_rating] += 1
 
             # Is it in the predicted top-N for this user?
-            top_n_predictions_for_user = top_n_predictions[int(held_out_user_id)]
+            user_top_n_predictions = top_n_predictions[int(held_out_user_id)]
 
-            rank = next((idx for idx, (movie_id, predicted_rating) in enumerate(top_n_predictions_for_user) if int(held_out_movie_id) == int(movie_id)), None)
+            rank = next((idx for idx, p in enumerate(user_top_n_predictions) if int(held_out_movie_id) == int(p.iid)), None)
             if rank is not None:
                 hits += 1
                 hits_by_rating[held_out_true_rating] += 1
@@ -89,7 +72,12 @@ class RecommenderMetrics:
             (rating, hits_by_rating[rating] / total_by_rating[rating]) for rating in sorted(hits_by_rating.keys())
         ]   
     
-        return hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank, rating_hit_rate
+        return HitRateMetrics(
+            hit_rate,
+            cumulative_hit_rate,
+            average_reciprocal_hit_rank,
+            rating_hit_rate,
+        )
 
     # What percentage of users have at least one "good" recommendation
     @staticmethod
@@ -98,14 +86,8 @@ class RecommenderMetrics:
             f"Calculating user coverage with a minimum predicted rating of {minimum_rating}"
         )
         hits = 0
-        for user_id in top_n_predictions.keys():
-            hit = False
-            top_n_predictions_for_user = top_n_predictions[int(user_id)]
-            for movie_id, predicted_rating in top_n_predictions_for_user:
-                if predicted_rating >= minimum_rating:
-                    hit = True
-                    break
-            if hit:
+        for uid in top_n_predictions.keys():
+            if any(p.est >= minimum_rating for p in top_n_predictions[uid]):
                 hits += 1
 
         return hits / n_users
@@ -116,13 +98,13 @@ class RecommenderMetrics:
         n = 0
         total = 0
         similarity_matrix = similarities_model.compute_similarities()
-        for user_id in top_n_predictions.keys():
-            pairs = itertools.combinations(top_n_predictions[user_id], 2)
+        for uid in top_n_predictions.keys():
+            pairs = itertools.combinations(top_n_predictions[uid], 2)
             for pair in pairs:
-                movie1 = pair[0][0]
-                movie2 = pair[1][0]
-                inner_id1 = similarities_model.trainset.to_inner_iid(str(movie1))
-                inner_id2 = similarities_model.trainset.to_inner_iid(str(movie2))
+                iid_1 = pair[0].iid
+                iid_2 = pair[1].iid
+                inner_id1 = similarities_model.trainset.to_inner_iid(str(iid_1))
+                inner_id2 = similarities_model.trainset.to_inner_iid(str(iid_2))
                 similarity = similarity_matrix[inner_id1][inner_id2]
                 total += similarity
                 n += 1
@@ -138,10 +120,10 @@ class RecommenderMetrics:
         _logger.info("Calculating novelty")
         n = 0
         total = 0
-        for user_id in top_n_predictions.keys():
-            for rating in top_n_predictions[user_id]:
-                movie_id = rating[0]
-                rank = rankings[movie_id]
+        for uid in top_n_predictions.keys():
+            for p in top_n_predictions[uid]:
+                iid = p.iid
+                rank = rankings[int(iid)]
                 total += rank
                 n += 1
         return total / n

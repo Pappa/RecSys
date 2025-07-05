@@ -1,4 +1,4 @@
-from recsys.RecommenderMetrics import RecommenderMetrics
+from recsys.RecommenderMetrics import RecommenderMetrics, HitRateMetrics
 import logging
 
 
@@ -29,8 +29,8 @@ class AlgorithmEvaluator:
         self._logger.info("Evaluation complete")
 
         return (
-            accuracy_metrics + top_n_metrics_loo + top_n_metrics_full,
-            accuracy_results + top_n_results_loo + top_n_results_full,
+            accuracy_metrics + list(top_n_metrics_loo[:-1]) + top_n_metrics_full,
+            accuracy_results + list(top_n_results_loo[:-1]) + top_n_results_full,
         )
 
     def _evaluate_accuracy(self, evaluation_dataset):
@@ -54,10 +54,10 @@ class AlgorithmEvaluator:
             anti_test_predictions, n, minimum_rating
         )
 
-        hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank, rating_hit_rate = RecommenderMetrics.hit_rate_metrics(top_n_predictions, loo_predictions, 4.0)
+        hit_rate_metrics = RecommenderMetrics.hit_rate_metrics(top_n_predictions, loo_predictions, 4.0)
 
 
-        return ["HR", "cHR", "ARHR"], [hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank]
+        return ["HR", "cHR", "ARHR", "rHR"], hit_rate_metrics
 
     def _evaluate_top_n_metrics_full(self, evaluation_dataset, n, minimum_rating):
         self._logger.info("Evaluating top-N metrics with full dataset")
