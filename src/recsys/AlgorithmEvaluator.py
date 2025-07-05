@@ -54,7 +54,7 @@ class AlgorithmEvaluator:
             anti_test_predictions, n, minimum_rating
         )
 
-        hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank = RecommenderMetrics.hit_rate_metrics(top_n_predictions, loo_predictions, 4.0)
+        hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank, rating_hit_rate = RecommenderMetrics.hit_rate_metrics(top_n_predictions, loo_predictions, 4.0)
 
 
         return ["HR", "cHR", "ARHR"], [hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank]

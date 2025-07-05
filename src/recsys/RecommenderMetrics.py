@@ -39,6 +39,8 @@ class RecommenderMetrics:
         cumulative_hits = 0
         reciprocal_hits = 0
         total = len(loo_testset)
+        hits_by_rating = defaultdict(int)
+        total_by_rating = defaultdict(int)
 
         # For each left-out rating
         for (
@@ -48,52 +50,28 @@ class RecommenderMetrics:
             held_out_predicted_rating,
             _,
         ) in loo_testset:
+            total_by_rating[held_out_true_rating] += 1
+
             # Is it in the predicted top-N for this user?
             top_n_predictions_for_user = top_n_predictions[int(held_out_user_id)]
 
             rank = next((idx for idx, (movie_id, predicted_rating) in enumerate(top_n_predictions_for_user) if int(held_out_movie_id) == int(movie_id)), None)
             if rank is not None:
                 hits += 1
+                hits_by_rating[held_out_true_rating] += 1
                 reciprocal_hits += 1.0 / (rank + 1)
             if rank is not None and held_out_true_rating >= minimum_rating:
                 cumulative_hits += 1
 
+
         hit_rate = hits / total
         cumulative_hit_rate = cumulative_hits / total
         average_reciprocal_hit_rank = reciprocal_hits / total
-    
-        return hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank
-
-    @staticmethod
-    def rating_hit_rate(top_n_predictions, loo_testset):
-        _logger.info("Calculating rating hit-rate")
-        hits = defaultdict(float)
-        total = defaultdict(float)
-
-        # For each left-out rating
-        for (
-            held_out_user_id,
-            held_out_movie_id,
-            held_out_true_rating,
-            held_out_predicted_rating,
-            _,
-        ) in loo_testset:
-            # Is it in the predicted top N for this user?
-            hit = False
-            top_n_predictions_for_user = top_n_predictions[int(held_out_user_id)]
-            for movie_id, predicted_rating in top_n_predictions_for_user:
-                if int(held_out_movie_id) == movie_id:
-                    hit = True
-                    break
-            if hit:
-                hits[held_out_true_rating] += 1
-
-            total[held_out_true_rating] += 1
-
         rating_hit_rate = [
-            (rating, hits[rating] / total[rating]) for rating in sorted(hits.keys())
-        ]
-        return rating_hit_rate
+            (rating, hits_by_rating[rating] / total_by_rating[rating]) for rating in sorted(hits_by_rating.keys())
+        ]   
+    
+        return hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank, rating_hit_rate
 
     # What percentage of users have at least one "good" recommendation
     @staticmethod
