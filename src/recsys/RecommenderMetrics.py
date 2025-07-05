@@ -126,4 +126,5 @@ class RecommenderMetrics:
                 rank = rankings[int(iid)]
                 total += rank
                 n += 1
+        print(f"total: {total}, n: {n}")
         return total / n
