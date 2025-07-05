@@ -10,7 +10,7 @@ import logging
 class ContentKNN(AlgoBase):
     def __init__(self, k=40, sim_options={}, verbose=False):
         AlgoBase.__init__(self)
-        self.k = k
+        self._k = k
         self._logger = logging.getLogger(self.__class__.__name__)
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
@@ -20,10 +20,10 @@ class ContentKNN(AlgoBase):
         # Compute item similarity matrix based on content attributes
 
         # Load up genre vectors for every movie
-        ml = MovieLens()
-        genres = ml.get_genres()
-        years = ml.get_years()
-        mes = ml.get_mis_en_scene()
+        lens = MovieLens()
+        genres = lens.get_genres()
+        years = lens.get_years()
+        mes = lens.get_mis_en_scene()
 
         self._logger.info("Generate content-based similarity matrix")
 
@@ -102,7 +102,7 @@ class ContentKNN(AlgoBase):
             neighbors.append((genre_similarity, rating[1]))
 
         # Extract the top-K most-similar ratings
-        k_neighbors = heapq.nlargest(self.k, neighbors, key=lambda t: t[0])
+        k_neighbors = heapq.nlargest(self._k, neighbors, key=lambda t: t[0])
 
         # Compute average sim score of K neighbors weighted by user ratings
         sim_total = weighted_sum = 0

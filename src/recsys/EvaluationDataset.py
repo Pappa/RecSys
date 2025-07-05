@@ -1,10 +1,17 @@
 from surprise.model_selection import train_test_split
 from surprise.model_selection import LeaveOneOut
-from surprise import KNNBaseline, Dataset
+from surprise import KNNBaseline, Dataset, Trainset
 import logging
 
 
 class EvaluationDataset:
+    _verbose: bool
+    _logger: logging.Logger
+    _trainset: Trainset
+    _testset: list[tuple]
+    _loo_trainset: Trainset
+    _loo_testset: list[tuple]
+
     def __init__(self, data: Dataset, popularity_rankings, verbose=False):
         self._verbose = verbose
         self._logger = logging.getLogger(self.__class__.__name__)
@@ -25,15 +32,16 @@ class EvaluationDataset:
         # And build an anti-test-set for building predictions
         loo_iterator = LeaveOneOut(n_splits=1, random_state=1)
         for train, test in loo_iterator.split(data):
-            self._loo_train = train
-            self._loo_test = test
+            self._loo_trainset = train
+            self._loo_testset = test
 
-        self._loo_anti_testset = self._loo_train.build_anti_testset()
+        self._loo_anti_testset = self._loo_trainset.build_anti_testset()
 
         # Compute similarty matrix between items so we can measure diversity
+        # TODO: replace this with a more efficient similarity matrix
         sim_options = {"name": "cosine", "user_based": False}
-        self._sims_algo = KNNBaseline(sim_options=sim_options, verbose=self._verbose)
-        self._sims_algo.fit(self._full_trainset)
+        self._similarity_model = KNNBaseline(sim_options=sim_options, verbose=self._verbose)
+        self._similarity_model.fit(self._full_trainset)
 
     @property
     def full_trainset(self):
@@ -66,19 +74,19 @@ class EvaluationDataset:
 
     @property
     def loo_trainset(self):
-        return self._loo_train
+        return self._loo_trainset
 
     @property
     def loo_testset(self):
-        return self._loo_test
+        return self._loo_testset
 
     @property
     def loo_anti_testset(self):
         return self._loo_anti_testset
 
     @property
-    def similarities(self):
-        return self._sims_algo
+    def similarity_model(self):
+        return self._similarity_model
 
     @property
     def popularity_rankings(self):

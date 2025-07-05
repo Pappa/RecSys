@@ -33,127 +33,79 @@ class RecommenderMetrics:
         return top_n
 
     @staticmethod
-    def hit_rate(top_n_preds, loo_testset):
-        _logger.info("Calculating hit-rate")
+    def hit_rate_metrics(top_n_predictions, loo_testset, minimum_rating=1e-5):
+        _logger.info("Calculating hit-rate metrics")
         hits = 0
-        total = 0
-
-        # For each left-out rating
-        for held_out_rating in loo_testset:
-            user_id = held_out_rating[0]
-            held_out_movie_id = held_out_rating[1]
-            # Is it in the predicted top 10 for this user?
-            hit = False
-            for movie_id, predicted_rating in top_n_preds[int(user_id)]:
-                if int(held_out_movie_id) == int(movie_id):
-                    hit = True
-                    break
-            if hit:
-                hits += 1
-
-            total += 1
-
-        # Compute overall precision
-        return hits / total
-
-    @staticmethod
-    def cumulative_hit_rate(top_n_preds, loo_testset, minimum_rating=1e-5):
-        _logger.info("Calculating cumulative hit-rate")
-        hits = 0
-        total = 0
+        cumulative_hits = 0
+        reciprocal_hits = 0
+        total = len(loo_testset)
 
         # For each left-out rating
         for (
-            user_id,
+            held_out_user_id,
             held_out_movie_id,
-            true_rating,
-            predicted_rating,
+            held_out_true_rating,
+            held_out_predicted_rating,
             _,
         ) in loo_testset:
-            # Only consider ratings that are greater than or equal to the minimum rating
-            if true_rating >= minimum_rating:
-                # Is it in the predicted top 10 for this user?
-                hit = False
-                for movie_id, predicted_rating in top_n_preds[int(user_id)]:
-                    if int(held_out_movie_id) == movie_id:
-                        hit = True
-                        break
-                if hit:
-                    hits += 1
+            # Is it in the predicted top-N for this user?
+            top_n_predictions_for_user = top_n_predictions[int(held_out_user_id)]
 
-                total += 1
+            rank = next((idx for idx, (movie_id, predicted_rating) in enumerate(top_n_predictions_for_user) if int(held_out_movie_id) == int(movie_id)), None)
+            if rank is not None:
+                hits += 1
+                reciprocal_hits += 1.0 / (rank + 1)
+            if rank is not None and held_out_true_rating >= minimum_rating:
+                cumulative_hits += 1
 
-        # Compute overall precision
-        return hits / total
+        hit_rate = hits / total
+        cumulative_hit_rate = cumulative_hits / total
+        average_reciprocal_hit_rank = reciprocal_hits / total
+    
+        return hit_rate, cumulative_hit_rate, average_reciprocal_hit_rank
 
     @staticmethod
-    def rating_hit_rate(top_n_preds, loo_testset):
+    def rating_hit_rate(top_n_predictions, loo_testset):
         _logger.info("Calculating rating hit-rate")
         hits = defaultdict(float)
         total = defaultdict(float)
 
         # For each left-out rating
         for (
-            user_id,
+            held_out_user_id,
             held_out_movie_id,
-            true_rating,
-            predicted_rating,
+            held_out_true_rating,
+            held_out_predicted_rating,
             _,
         ) in loo_testset:
             # Is it in the predicted top N for this user?
             hit = False
-            for movie_id, predicted_rating in top_n_preds[int(user_id)]:
+            top_n_predictions_for_user = top_n_predictions[int(held_out_user_id)]
+            for movie_id, predicted_rating in top_n_predictions_for_user:
                 if int(held_out_movie_id) == movie_id:
                     hit = True
                     break
             if hit:
-                hits[true_rating] += 1
+                hits[held_out_true_rating] += 1
 
-            total[true_rating] += 1
+            total[held_out_true_rating] += 1
 
         rating_hit_rate = [
             (rating, hits[rating] / total[rating]) for rating in sorted(hits.keys())
         ]
         return rating_hit_rate
 
-    @staticmethod
-    def average_reciprocal_hit_rank(top_n_preds, loo_testset):
-        _logger.info("Calculating average reciprocal hit rank")
-        summation = 0
-        total = 0
-        # For each left-out rating
-        for (
-            user_id,
-            held_out_movie_id,
-            true_rating,
-            predicted_rating,
-            _,
-        ) in loo_testset:
-            # Is it in the predicted top N for this user?
-            hit_rank = 0
-            rank = 0
-            for movie_id, predicted_rating in top_n_preds[int(user_id)]:
-                rank = rank + 1
-                if int(held_out_movie_id) == movie_id:
-                    hit_rank = rank
-                    break
-            if hit_rank > 0:
-                summation += 1.0 / hit_rank
-
-            total += 1
-
-        return summation / total
-
     # What percentage of users have at least one "good" recommendation
     @staticmethod
-    def user_coverage(top_n_preds, n_users, minimum_rating=0):
+    def user_coverage(top_n_predictions, n_users, minimum_rating=0):
         _logger.info(
             f"Calculating user coverage with a minimum predicted rating of {minimum_rating}"
         )
         hits = 0
-        for user_id in top_n_preds.keys():
+        for user_id in top_n_predictions.keys():
             hit = False
-            for movie_id, predicted_rating in top_n_preds[user_id]:
+            top_n_predictions_for_user = top_n_predictions[int(user_id)]
+            for movie_id, predicted_rating in top_n_predictions_for_user:
                 if predicted_rating >= minimum_rating:
                     hit = True
                     break
@@ -163,13 +115,13 @@ class RecommenderMetrics:
         return hits / n_users
 
     @staticmethod
-    def diversity(top_n_preds, similarities_model):
+    def diversity(top_n_predictions, similarities_model):
         _logger.info("Calculating diversity")
         n = 0
         total = 0
         similarity_matrix = similarities_model.compute_similarities()
-        for user_id in top_n_preds.keys():
-            pairs = itertools.combinations(top_n_preds[user_id], 2)
+        for user_id in top_n_predictions.keys():
+            pairs = itertools.combinations(top_n_predictions[user_id], 2)
             for pair in pairs:
                 movie1 = pair[0][0]
                 movie2 = pair[1][0]
@@ -186,12 +138,12 @@ class RecommenderMetrics:
             return 0
 
     @staticmethod
-    def novelty(top_n_preds, rankings):
+    def novelty(top_n_predictions, rankings):
         _logger.info("Calculating novelty")
         n = 0
         total = 0
-        for user_id in top_n_preds.keys():
-            for rating in top_n_preds[user_id]:
+        for user_id in top_n_predictions.keys():
+            for rating in top_n_predictions[user_id]:
                 movie_id = rating[0]
                 rank = rankings[movie_id]
                 total += rank

@@ -45,9 +45,8 @@ if __name__ == "__main__":
 
     spark.stop()
 
-    ml = MovieLens()
-    ml.load_movielens_data()
+    lens, ratings_data, rankings = MovieLens.load()
 
     for row in sample_user_recs:
         for rec in row.recommendations:
-            print(ml.get_movie_name(rec.movieId))
+            print(lens.get_movie_name(rec.movieId))

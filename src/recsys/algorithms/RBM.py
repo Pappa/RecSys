@@ -151,8 +151,7 @@ class RBM(AlgoBase):
         self.hidden_dim = hidden_dim
         self.learning_rate = learning_rate
         self.batch_size = batch_size
-        self.ml = MovieLens()
-        self.ml.load_movielens_data()
+        self._lens, _, _ = MovieLens.load()
         self.stoplist = ["sex", "drugs", "rock n roll"]
         self._logger = logging.getLogger(self.__class__.__name__)
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
@@ -162,7 +161,7 @@ class RBM(AlgoBase):
         for iiid in trainset.all_items():
             self.stop_list_lookup[iiid] = False
             movie_id = trainset.to_raw_iid(iiid)
-            title = self.ml.get_movie_name(int(movie_id))
+            title = self._lens.get_movie_name(int(movie_id))
             if title:
                 title = title.lower()
                 for term in self.stoplist:
