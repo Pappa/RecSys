@@ -1,4 +1,5 @@
 import itertools
+from functools import reduce
 from surprise import accuracy, Prediction
 from collections import defaultdict
 import logging
@@ -22,13 +23,30 @@ class RecommenderMetrics:
         _logger.info("Get top-N predictions")
         top_n = defaultdict(list)
 
-        for user_id, movie_id, true_rating, predicted_rating, _ in predictions:
+        for uid, iid, true_rating, predicted_rating, _ in predictions:
             if predicted_rating >= minimum_rating:
-                top_n[int(user_id)].append((int(movie_id), predicted_rating))
+                top_n[int(uid)].append((iid, predicted_rating))
 
-        for user_id, ratings in top_n.items():
+        for uid, ratings in top_n.items():
             ratings.sort(key=lambda x: x[1], reverse=True)
-            top_n[int(user_id)] = ratings[:n]
+            top_n[uid] = ratings[:n]
+
+        return top_n
+    @staticmethod
+    def get_top_n2(predictions: list[Prediction], n=10, minimum_rating=4.0):
+        _logger.info("Get top-N predictions")
+        top_n = defaultdict(list)
+
+        sorted_predictions = sorted(predictions, key=lambda x: x[3], reverse=True)
+
+        for prediction in sorted_predictions:
+            uid, iid, true_rating, estimated_rating, _ = prediction
+            # if len(top_n[uid]) < n and estimated_rating >= minimum_rating:
+            if estimated_rating >= minimum_rating:
+                top_n[uid].append(prediction)
+                
+        for uid, top_n_predictions in top_n.items():
+            top_n[uid] = top_n_predictions[:n]
 
         return top_n
 
