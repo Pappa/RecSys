@@ -13,7 +13,7 @@ class AlgorithmEvaluator:
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
     def evaluate(
-        self, evaluation_dataset, top_n_metrics=False, minimum_rating=0.4, n=10
+        self, evaluation_dataset, top_n_metrics=False, minimum_rating=4.0, n=10
     ):
         self._logger.info(
             f"Evaluating: {self.__class__.__name__}({self._algorithm.__class__.__name__}, {self._name})"

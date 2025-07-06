@@ -20,7 +20,7 @@ class Evaluator:
         alg = AlgorithmEvaluator(algorithm, name, verbose=self._verbose)
         self._algorithms.append(alg)
 
-    def evaluate(self, top_n_metrics=False, minimum_rating=0.0):
+    def evaluate(self, top_n_metrics=False, minimum_rating=1e-5):
         names, metrics, results = [], [], []
         
         for algorithm in self._algorithms:

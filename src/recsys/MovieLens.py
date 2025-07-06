@@ -7,17 +7,19 @@ from surprise import Reader
 from collections import defaultdict
 import logging
 
+type PopularityRankings = dict[int, int]
+
 
 class MovieLens:
     _names_by_movie_id: dict[int, str] = {}
     _movies_by_name: dict[str, int] = {}
 
     @classmethod
-    def load(cls, *args, **kwargs):
+    def load(cls, *args, **kwargs) -> tuple["MovieLens", Dataset, PopularityRankings]:
         lens = MovieLens(*args, **kwargs)
         data = lens.load_movielens_data()
         rankings = lens.get_popularity_ranks()
-        return (lens, data, rankings)
+        return lens, data, rankings
 
     def __init__(self, verbose=False) -> None:
         self._logger = logging.getLogger(self.__class__.__name__)
@@ -31,7 +33,7 @@ class MovieLens:
             self._path_base + "/data/visual_features.csv"
         ).resolve()
 
-    def load_movielens_data(self):
+    def load_movielens_data(self) -> Dataset:
         self._logger.info("Loading MovieLens data")
         self._names_by_movie_id = defaultdict(int)
         self._movies_by_name = defaultdict(str)
@@ -79,7 +81,7 @@ class MovieLens:
 
         return user_ratings
 
-    def get_popularity_ranks(self):
+    def get_popularity_ranks(self) -> PopularityRankings:
         self._logger.info("Generate movie popularity ranks to measure novelty later.")
         ratings = defaultdict(int)
         rankings = defaultdict(int)
@@ -87,13 +89,13 @@ class MovieLens:
             rating_reader = csv.reader(csvfile)
             next(rating_reader)  # skip header row
             for row in rating_reader:
-                movie_id = int(row[1])
-                ratings[movie_id] += 1
+                iid = int(row[1])
+                ratings[iid] += 1
         rank = 1
-        for movie_id, rating_count in sorted(
+        for iid, rating_count in sorted(
             ratings.items(), key=lambda x: x[1], reverse=True
         ):
-            rankings[movie_id] = rank
+            rankings[iid] = rank
             rank += 1
         return rankings
 

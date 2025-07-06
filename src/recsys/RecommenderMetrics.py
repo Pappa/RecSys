@@ -20,7 +20,7 @@ class RecommenderMetrics:
         return accuracy.rmse(predictions, verbose=verbose)
 
     @staticmethod
-    def get_top_n(predictions: list[Prediction], n=10, minimum_rating=4.0):
+    def get_top_n(predictions: list[Prediction], n=10, minimum_rating=1e-5) -> dict[int, list[Prediction]]:
         _logger.info("Get top-N predictions")
         top_n = defaultdict(list)
 
@@ -34,7 +34,7 @@ class RecommenderMetrics:
         return top_n
 
     @staticmethod
-    def hit_rate_metrics(top_n_predictions, loo_testset, minimum_rating=1e-5):
+    def hit_rate_metrics(top_n_predictions: list[Prediction], loo_testset, minimum_rating=1e-5):
         _logger.info("Calculating hit-rate metrics")
         hits = 0
         cumulative_hits = 0
@@ -81,7 +81,7 @@ class RecommenderMetrics:
 
     # What percentage of users have at least one "good" recommendation
     @staticmethod
-    def user_coverage(top_n_predictions, n_users, minimum_rating=0):
+    def user_coverage(top_n_predictions: list[Prediction], n_users, minimum_rating=1e-5):
         _logger.info(
             f"Calculating user coverage with a minimum predicted rating of {minimum_rating}"
         )
@@ -93,7 +93,7 @@ class RecommenderMetrics:
         return hits / n_users
 
     @staticmethod
-    def diversity(top_n_predictions, similarities_model):
+    def diversity(top_n_predictions: list[Prediction], similarities_model):
         _logger.info("Calculating diversity")
         n = 0
         total = 0
@@ -116,15 +116,13 @@ class RecommenderMetrics:
             return 0
 
     @staticmethod
-    def novelty(top_n_predictions, rankings):
+    def novelty(top_n_predictions: list[Prediction], rankings):
         _logger.info("Calculating novelty")
         n = 0
         total = 0
         for uid in top_n_predictions.keys():
             for p in top_n_predictions[uid]:
-                iid = p.iid
-                rank = rankings[int(iid)]
+                rank = rankings[int(p.iid)]
                 total += rank
                 n += 1
-        print(f"total: {total}, n: {n}")
         return total / n

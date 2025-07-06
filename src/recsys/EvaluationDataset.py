@@ -2,15 +2,19 @@ from surprise.model_selection import train_test_split
 from surprise.model_selection import LeaveOneOut
 from surprise import KNNBaseline, Dataset, Trainset
 import logging
+from collections import namedtuple
+
+
+Testset = namedtuple("Testset", ["uid", "iid", "rating"])
 
 
 class EvaluationDataset:
     _verbose: bool
     _logger: logging.Logger
     _trainset: Trainset
-    _testset: list[tuple]
+    _testset: list[Testset]
     _loo_trainset: Trainset
-    _loo_testset: list[tuple]
+    _loo_testset: list[Testset]
 
     def __init__(self, data: Dataset, popularity_rankings, verbose=False):
         self._verbose = verbose
