@@ -13,7 +13,7 @@ class AlgorithmEvaluator:
         self._logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
     def evaluate(
-        self, evaluation_dataset, top_n_metrics=False, minimum_rating=4.0, n=10
+        self, evaluation_dataset, top_n_metrics=False, minimum_rating=1e-5, coverage_threshold=1e-5, n=10
     ):
         self._logger.info(
             f"Evaluating: {self.__class__.__name__}({self._algorithm.__class__.__name__}, {self._name})"
@@ -24,7 +24,7 @@ class AlgorithmEvaluator:
 
         if top_n_metrics:
             top_n_metrics_loo, top_n_results_loo = self._evaluate_top_n_metrics_loo(evaluation_dataset, n, minimum_rating)
-            top_n_metrics_full, top_n_results_full = self._evaluate_top_n_metrics_full(evaluation_dataset, n, minimum_rating)
+            top_n_metrics_full, top_n_results_full = self._evaluate_top_n_metrics_full(evaluation_dataset, n, minimum_rating, coverage_threshold)
 
         self._logger.info("Evaluation complete")
 
@@ -54,12 +54,12 @@ class AlgorithmEvaluator:
             anti_test_predictions, n, minimum_rating
         )
 
-        hit_rate_metrics = RecommenderMetrics.hit_rate_metrics(top_n_predictions, loo_predictions, 4.0)
+        hit_rate_metrics = RecommenderMetrics.hit_rate_metrics(top_n_predictions, loo_predictions, minimum_rating)
 
 
         return ["HR", "cHR", "ARHR", "rHR"], hit_rate_metrics
 
-    def _evaluate_top_n_metrics_full(self, evaluation_dataset, n, minimum_rating):
+    def _evaluate_top_n_metrics_full(self, evaluation_dataset, n, minimum_rating, coverage_threshold):
         self._logger.info("Evaluating top-N metrics with full dataset")
         self._algorithm.fit(evaluation_dataset.full_trainset)
         all_predictions = self._algorithm.test(
@@ -72,7 +72,7 @@ class AlgorithmEvaluator:
         coverage = RecommenderMetrics.user_coverage(
             top_n_predictions,
             evaluation_dataset.full_trainset.n_users,
-            minimum_rating=minimum_rating,
+            minimum_rating=coverage_threshold,
         )
 
         diversity = RecommenderMetrics.diversity(

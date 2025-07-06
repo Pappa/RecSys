@@ -51,7 +51,7 @@ class Evaluator:
         alg = AlgorithmEvaluator(algorithm, name, verbose=self._verbose)
         self._algorithms.append(alg)
 
-    def evaluate(self, top_n_metrics=False, minimum_rating=1e-5) -> EvaluationResultSet:
+    def evaluate(self, top_n_metrics=False, minimum_rating=1e-5, coverage_threshold=1e-5) -> EvaluationResultSet:
         evaluation_results = []
         
         for algorithm in self._algorithms:
@@ -60,6 +60,7 @@ class Evaluator:
                 evaluation_dataset=self._dataset,
                 top_n_metrics=top_n_metrics,
                 minimum_rating=minimum_rating,
+                coverage_threshold=coverage_threshold,
             )
             evaluation_results.append(EvaluationResult(
                 algorithm=algorithm.name,
