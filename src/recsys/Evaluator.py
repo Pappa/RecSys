@@ -1,7 +1,38 @@
 from recsys.EvaluationDataset import EvaluationDataset
 from recsys.AlgorithmEvaluator import AlgorithmEvaluator
 import logging
+from dataclasses import dataclass
+import pandas as pd
 
+@dataclass
+class EvaluationResult:
+    """Evaluation result for a single algorithm."""
+    algorithm: str
+    metrics: list[str]
+    values: list[float]
+
+    def show(self):
+        print(f"{self.algorithm}:")
+        for metric, result in zip(self.metrics, self.values):
+            print(f"  {metric}: {result}")
+
+@dataclass
+class EvaluationResultSet:
+    """Evaluation result for a set of algorithms."""
+    results: list[EvaluationResult]
+
+    def show(self):
+        for result in self.results:
+            result.show()
+
+    def to_df(self) -> pd.DataFrame:
+        algorithms = [result.algorithm for result in self.results]
+        values = [result.values for result in self.results]
+        metrics = self.results[0].metrics
+
+        return pd.DataFrame(
+            values, columns=metrics, index=pd.Index(algorithms, name="Algorithm")
+        )
 
 class Evaluator:
     _verbose: bool
@@ -20,8 +51,8 @@ class Evaluator:
         alg = AlgorithmEvaluator(algorithm, name, verbose=self._verbose)
         self._algorithms.append(alg)
 
-    def evaluate(self, top_n_metrics=False, minimum_rating=1e-5):
-        names, metrics, results = [], [], []
+    def evaluate(self, top_n_metrics=False, minimum_rating=1e-5) -> EvaluationResultSet:
+        evaluation_results = []
         
         for algorithm in self._algorithms:
             self._logger.info(f"Evaluating: {algorithm.name}")
@@ -30,14 +61,19 @@ class Evaluator:
                 top_n_metrics=top_n_metrics,
                 minimum_rating=minimum_rating,
             )
+            evaluation_results.append(EvaluationResult(
+                algorithm=algorithm.name,
+                metrics=algorithm_metrics,
+                values=algorithm_results,
+            ))
 
-            names.append(algorithm.name)
-            metrics.append(algorithm_metrics)
-            results.append(algorithm_results)
+        return EvaluationResultSet(results=evaluation_results)
 
-        return names, metrics[0], results
+    def sample_top_n_recs(self, uid, n=10):
+        if not uid:
+            raise ValueError("uid is required")
 
-    def sample_top_n_recs(self, lens, test_uid=85, n=10):
+        results = {}
         for algorithm in self._algorithms:
             self._logger.info(f"Using recommender: {algorithm.name}")
 
@@ -46,20 +82,10 @@ class Evaluator:
             algorithm.algorithm.fit(trainset)
 
             self._logger.info("Generate recommendations")
-            testset = self._dataset.get_anti_testset_for_user(test_uid)
-
+            testset = self._dataset.get_anti_testset_for_user(uid)
             predictions = algorithm.algorithm.test(testset)
 
-            recommendations = []
+            top_n_predictions = sorted(predictions, key=lambda x: x.est, reverse=True)[:n]
+            results[algorithm.name] = [p.iid for p in top_n_predictions]
 
-            for user_id, movie_id, actual_rating, estimated_rating, _ in predictions:
-                int_movie_id = int(movie_id)
-                recommendations.append((int_movie_id, estimated_rating))
-
-            recommendations.sort(key=lambda x: x[1], reverse=True)
-
-            samples = [
-                (lens.get_movie_name(ratings[0]), ratings[1])
-                for ratings in recommendations[:n]
-            ]
-            return samples
+        return results

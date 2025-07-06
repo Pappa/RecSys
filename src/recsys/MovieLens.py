@@ -170,7 +170,13 @@ class MovieLens:
         return mes
 
     def get_movie_name(self, movie_id):
-        return self._names_by_movie_id[movie_id]
+        return self._names_by_movie_id[int(movie_id)]
+
+    def get_movie_names(self, movie_ids):
+        return [self._names_by_movie_id[int(movie_id)] for movie_id in movie_ids]
 
     def get_movie_id(self, movie_name):
         return self._movies_by_name[movie_name]
+    
+    def get_movie_ids(self, movie_names):
+        return [self._movies_by_name[movie_name] for movie_name in movie_names]
