@@ -13,6 +13,10 @@ dependencies = ["surprise", "numpy<2", "pandas", "tensorflow"]
 dev = ["pytest", "pytest-cov", "pytest-mock", "ipykernel"]
 gpu = ["tensorflow[and-cuda]"]
 
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
 exclude = ["tests", "notebooks"]
